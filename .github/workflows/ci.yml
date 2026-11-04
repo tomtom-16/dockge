@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node: [22] # Can be changed
+        node: [26]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -41,13 +41,16 @@ jobs:
           node-version: ${{matrix.node}}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Check Typescript
         run: npm run check-ts
+
+      - name: Check native modules
+        run: npm run test:native && npm run test:compat
 
       - name: Build
         run: npm run build:frontend

@@ -14,8 +14,13 @@ npm run publish:local
 
 Le Dockerfile autonome `docker/Dockerfile.local` compile le frontend et le
 healthcheck, exécute ESLint, TypeScript et les tests du nettoyage, puis assemble
-les dépendances Linux avec Node 22. Aucun `npm install` sur macOS n'est nécessaire
-pour cette construction. Les données, fichiers `.env` et dépendances locales
+les dépendances Linux avec Node 26 et vérifie le terminal natif ainsi que SQLite.
+Le pilote officiel `sqlite3` est compilé dans Debian Bookworm pour éviter les
+incompatibilités de ses binaires précompilés avec la glibc de cette image.
+Aucun `npm install` sur macOS n'est nécessaire pour cette construction.
+Node 26 prend en charge AMD64 et ARM64 ; les scripts
+de publication ne ciblent plus ARMv7, absent des images officielles Node 26.
+Les données, fichiers `.env` et dépendances locales
 sont exclus par `docker/Dockerfile.local.dockerignore`.
 
 La publication sélectionne explicitement le manifeste AMD64. Si GHCR demande

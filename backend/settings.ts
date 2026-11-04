@@ -65,7 +65,7 @@ export class Settings {
             };
 
             return v;
-        } catch (e) {
+        } catch {
             return value;
         }
     }
@@ -108,7 +108,7 @@ export class Settings {
         for (const row of list) {
             try {
                 result[row.key] = JSON.parse(row.value);
-            } catch (e) {
+            } catch {
                 result[row.key] = row.value;
             }
         }

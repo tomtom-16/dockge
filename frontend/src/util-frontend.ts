@@ -39,7 +39,7 @@ export function timezoneList() {
                 value: timezone.tzCode,
                 time: getTimezoneOffset(timezone.tzCode),
             });
-        } catch (e) {
+        } catch {
             // Skipping not supported timezone.tzCode by dayjs
         }
     }

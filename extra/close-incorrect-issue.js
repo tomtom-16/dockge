@@ -1,4 +1,4 @@
-import github from "@actions/github";
+import { getOctokit } from "@actions/github";
 
 (async () => {
     try {
@@ -6,7 +6,7 @@ import github from "@actions/github";
         const issueNumber = process.argv[3];
         const username = process.argv[4];
 
-        const client = github.getOctokit(token).rest;
+        const client = getOctokit(token).rest;
 
         const issue = {
             owner: "louislam",

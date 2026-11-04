@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { Socket } from "socket.io-client";
 import { defineComponent } from "vue";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { Terminal } from "@xterm/xterm";
 import { AgentSocket } from "../../../common/agent-socket";
 
@@ -131,7 +131,7 @@ export default defineComponent({
     methods: {
 
         endpointDisplayFunction(endpoint : string) {
-            for (const [ k, v ] of Object.entries(this.$data.agentList)) {
+            for (const v of Object.values(this.$data.agentList)) {
                 if (endpoint) {
                     if (endpoint === v["endpoint"] && v["name"] !== "") {
                         return v["name"];

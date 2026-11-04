@@ -163,7 +163,7 @@ export class DockgeServer {
 
         try {
             this.indexHTML = fs.readFileSync("./frontend-dist/index.html").toString();
-        } catch (e) {
+        } catch {
             // "dist/index.html" is not necessary for development
             if (process.env.NODE_ENV !== "development") {
                 log.error("server", "Error: Cannot find 'frontend-dist/index.html', did you install correctly?");
@@ -232,7 +232,7 @@ export class DockgeServer {
                                 isOriginValid = false;
                                 log.error("auth", `Origin (${origin}) does not match host (${host}), IP: ${req.socket.remoteAddress}`);
                             }
-                        } catch (e) {
+                        } catch {
                             // Invalid origin url, probably not from browser
                             isOriginValid = false;
                             log.error("auth", `Invalid origin url (${origin}), IP: ${req.socket.remoteAddress}`);
@@ -512,7 +512,7 @@ export class DockgeServer {
             } else {
                 return "UTC";
             }
-        } catch (e) {
+        } catch {
             // Guess failed, fall back to UTC
             log.debug("timezone", "Guessed an invalid timezone. Use UTC as fallback");
             return "UTC";
@@ -536,7 +536,7 @@ export class DockgeServer {
     checkTimezone(timezone : string) {
         try {
             dayjs.utc("2013-11-18 11:55").tz(timezone).format();
-        } catch (e) {
+        } catch {
             throw new Error("Invalid timezone:" + timezone);
         }
     }
@@ -655,7 +655,7 @@ export class DockgeServer {
                 try {
                     let obj = JSON.parse(line);
                     stats.set(obj.Name, obj);
-                } catch (e) {
+                } catch {
                 }
             }
 
@@ -705,7 +705,7 @@ export class DockgeServer {
                 try {
                     socket.emit("refresh");
                     socket.disconnect();
-                } catch (e) {
+                } catch {
 
                 }
             }

@@ -3,58 +3,58 @@
 import { intHash, isDev } from "../common/util-common";
 import dayjs from "dayjs";
 
-export const CONSOLE_STYLE_Reset = "\x1b[0m";
-export const CONSOLE_STYLE_Bright = "\x1b[1m";
-export const CONSOLE_STYLE_Dim = "\x1b[2m";
-export const CONSOLE_STYLE_Underscore = "\x1b[4m";
-export const CONSOLE_STYLE_Blink = "\x1b[5m";
-export const CONSOLE_STYLE_Reverse = "\x1b[7m";
-export const CONSOLE_STYLE_Hidden = "\x1b[8m";
+export const CONSOLE_STYLE_RESET = "\x1b[0m";
+export const CONSOLE_STYLE_BRIGHT = "\x1b[1m";
+export const CONSOLE_STYLE_DIM = "\x1b[2m";
+export const CONSOLE_STYLE_UNDERSCORE = "\x1b[4m";
+export const CONSOLE_STYLE_BLINK = "\x1b[5m";
+export const CONSOLE_STYLE_REVERSE = "\x1b[7m";
+export const CONSOLE_STYLE_HIDDEN = "\x1b[8m";
 
-export const CONSOLE_STYLE_FgBlack = "\x1b[30m";
-export const CONSOLE_STYLE_FgRed = "\x1b[31m";
-export const CONSOLE_STYLE_FgGreen = "\x1b[32m";
-export const CONSOLE_STYLE_FgYellow = "\x1b[33m";
-export const CONSOLE_STYLE_FgBlue = "\x1b[34m";
-export const CONSOLE_STYLE_FgMagenta = "\x1b[35m";
-export const CONSOLE_STYLE_FgCyan = "\x1b[36m";
-export const CONSOLE_STYLE_FgWhite = "\x1b[37m";
-export const CONSOLE_STYLE_FgGray = "\x1b[90m";
-export const CONSOLE_STYLE_FgOrange = "\x1b[38;5;208m";
-export const CONSOLE_STYLE_FgLightGreen = "\x1b[38;5;119m";
-export const CONSOLE_STYLE_FgLightBlue = "\x1b[38;5;117m";
-export const CONSOLE_STYLE_FgViolet = "\x1b[38;5;141m";
-export const CONSOLE_STYLE_FgBrown = "\x1b[38;5;130m";
-export const CONSOLE_STYLE_FgPink = "\x1b[38;5;219m";
+export const CONSOLE_STYLE_FG_BLACK = "\x1b[30m";
+export const CONSOLE_STYLE_FG_RED = "\x1b[31m";
+export const CONSOLE_STYLE_FG_GREEN = "\x1b[32m";
+export const CONSOLE_STYLE_FG_YELLOW = "\x1b[33m";
+export const CONSOLE_STYLE_FG_BLUE = "\x1b[34m";
+export const CONSOLE_STYLE_FG_MAGENTA = "\x1b[35m";
+export const CONSOLE_STYLE_FG_CYAN = "\x1b[36m";
+export const CONSOLE_STYLE_FG_WHITE = "\x1b[37m";
+export const CONSOLE_STYLE_FG_GRAY = "\x1b[90m";
+export const CONSOLE_STYLE_FG_ORANGE = "\x1b[38;5;208m";
+export const CONSOLE_STYLE_FG_LIGHT_GREEN = "\x1b[38;5;119m";
+export const CONSOLE_STYLE_FG_LIGHT_BLUE = "\x1b[38;5;117m";
+export const CONSOLE_STYLE_FG_VIOLET = "\x1b[38;5;141m";
+export const CONSOLE_STYLE_FG_BROWN = "\x1b[38;5;130m";
+export const CONSOLE_STYLE_FG_PINK = "\x1b[38;5;219m";
 
-export const CONSOLE_STYLE_BgBlack = "\x1b[40m";
-export const CONSOLE_STYLE_BgRed = "\x1b[41m";
-export const CONSOLE_STYLE_BgGreen = "\x1b[42m";
-export const CONSOLE_STYLE_BgYellow = "\x1b[43m";
-export const CONSOLE_STYLE_BgBlue = "\x1b[44m";
-export const CONSOLE_STYLE_BgMagenta = "\x1b[45m";
-export const CONSOLE_STYLE_BgCyan = "\x1b[46m";
-export const CONSOLE_STYLE_BgWhite = "\x1b[47m";
-export const CONSOLE_STYLE_BgGray = "\x1b[100m";
+export const CONSOLE_STYLE_BG_BLACK = "\x1b[40m";
+export const CONSOLE_STYLE_BG_RED = "\x1b[41m";
+export const CONSOLE_STYLE_BG_GREEN = "\x1b[42m";
+export const CONSOLE_STYLE_BG_YELLOW = "\x1b[43m";
+export const CONSOLE_STYLE_BG_BLUE = "\x1b[44m";
+export const CONSOLE_STYLE_BG_MAGENTA = "\x1b[45m";
+export const CONSOLE_STYLE_BG_CYAN = "\x1b[46m";
+export const CONSOLE_STYLE_BG_WHITE = "\x1b[47m";
+export const CONSOLE_STYLE_BG_GRAY = "\x1b[100m";
 
 const consoleModuleColors = [
-    CONSOLE_STYLE_FgCyan,
-    CONSOLE_STYLE_FgGreen,
-    CONSOLE_STYLE_FgLightGreen,
-    CONSOLE_STYLE_FgBlue,
-    CONSOLE_STYLE_FgLightBlue,
-    CONSOLE_STYLE_FgMagenta,
-    CONSOLE_STYLE_FgOrange,
-    CONSOLE_STYLE_FgViolet,
-    CONSOLE_STYLE_FgBrown,
-    CONSOLE_STYLE_FgPink,
+    CONSOLE_STYLE_FG_CYAN,
+    CONSOLE_STYLE_FG_GREEN,
+    CONSOLE_STYLE_FG_LIGHT_GREEN,
+    CONSOLE_STYLE_FG_BLUE,
+    CONSOLE_STYLE_FG_LIGHT_BLUE,
+    CONSOLE_STYLE_FG_MAGENTA,
+    CONSOLE_STYLE_FG_ORANGE,
+    CONSOLE_STYLE_FG_VIOLET,
+    CONSOLE_STYLE_FG_BROWN,
+    CONSOLE_STYLE_FG_PINK,
 ];
 
 const consoleLevelColors : Record<string, string> = {
-    "INFO": CONSOLE_STYLE_FgCyan,
-    "WARN": CONSOLE_STYLE_FgYellow,
-    "ERROR": CONSOLE_STYLE_FgRed,
-    "DEBUG": CONSOLE_STYLE_FgGray,
+    "INFO": CONSOLE_STYLE_FG_CYAN,
+    "WARN": CONSOLE_STYLE_FG_YELLOW,
+    "ERROR": CONSOLE_STYLE_FG_RED,
+    "DEBUG": CONSOLE_STYLE_FG_GRAY,
 };
 
 class Logger {
@@ -124,9 +124,9 @@ class Logger {
         const levelColor = consoleLevelColors[level];
         const moduleColor = consoleModuleColors[intHash(module, consoleModuleColors.length)];
 
-        let timePart = CONSOLE_STYLE_FgCyan + now + CONSOLE_STYLE_Reset;
-        const modulePart = "[" + moduleColor + module + CONSOLE_STYLE_Reset + "]";
-        const levelPart = levelColor + `${level}:` + CONSOLE_STYLE_Reset;
+        let timePart = CONSOLE_STYLE_FG_CYAN + now + CONSOLE_STYLE_RESET;
+        const modulePart = "[" + moduleColor + module + CONSOLE_STYLE_RESET + "]";
+        const levelPart = levelColor + `${level}:` + CONSOLE_STYLE_RESET;
 
         if (level === "INFO") {
             console.info(timePart, modulePart, levelPart, msg);
@@ -135,17 +135,17 @@ class Logger {
         } else if (level === "ERROR") {
             let msgPart : unknown;
             if (typeof msg === "string") {
-                msgPart = CONSOLE_STYLE_FgRed + msg + CONSOLE_STYLE_Reset;
+                msgPart = CONSOLE_STYLE_FG_RED + msg + CONSOLE_STYLE_RESET;
             } else {
                 msgPart = msg;
             }
             console.error(timePart, modulePart, levelPart, msgPart);
         } else if (level === "DEBUG") {
             if (isDev) {
-                timePart = CONSOLE_STYLE_FgGray + now + CONSOLE_STYLE_Reset;
+                timePart = CONSOLE_STYLE_FG_GRAY + now + CONSOLE_STYLE_RESET;
                 let msgPart : unknown;
                 if (typeof msg === "string") {
-                    msgPart = CONSOLE_STYLE_FgGray + msg + CONSOLE_STYLE_Reset;
+                    msgPart = CONSOLE_STYLE_FG_GRAY + msg + CONSOLE_STYLE_RESET;
                 } else {
                     msgPart = msg;
                 }

@@ -116,8 +116,8 @@
 
                     <!-- Containers -->
                     <h4 class="mb-3 d-flex align-items-center gap-2">
-                        {{ $tc("container", 2) }}
-                        <button class="btn btn-normal rounded-pill container-toggle" type="button" :aria-label="$tc('container', 2)" :aria-expanded="containersOpen" aria-controls="compose-containers" @click="containersOpen = !containersOpen">
+                        {{ $t("container", 2) }}
+                        <button class="btn btn-normal rounded-pill container-toggle" type="button" :aria-label="$t('container', 2)" :aria-expanded="containersOpen" aria-controls="compose-containers" @click="containersOpen = !containersOpen">
                             <font-awesome-icon :icon="containersOpen ? 'chevron-up' : 'chevron-down'" />
                         </button>
                     </h4>
@@ -160,7 +160,7 @@
                             <!-- URLs -->
                             <div class="mb-4">
                                 <label class="form-label">
-                                    {{ $tc("url", 2) }}
+                                    {{ $t("url", 2) }}
                                 </label>
                                 <ArrayInput name="urls" :display-name="$t('url')" placeholder="https://" object-type="x-dockge" />
                             </div>
@@ -225,13 +225,13 @@
                     <div v-if="isEditMode">
                         <!-- Volumes -->
                         <div v-if="false">
-                            <h4 class="mb-3">{{ $tc("volume", 2) }}</h4>
+                            <h4 class="mb-3">{{ $t("volume", 2) }}</h4>
                             <div class="shadow-box big-padding mb-3">
                             </div>
                         </div>
 
                         <!-- Networks -->
-                        <h4 class="mb-3">{{ $tc("network", 2) }}</h4>
+                        <h4 class="mb-3">{{ $t("network", 2) }}</h4>
                         <div class="shadow-box big-padding mb-3">
                             <NetworkInput />
                         </div>
@@ -382,7 +382,7 @@ export default {
                         pathname = "";
                     }
                     display = obj.host + pathname + obj.search;
-                } catch (e) {
+                } catch {
                     display = url;
                 }
 
@@ -863,7 +863,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../styles/vars.scss";
+@use "../styles/vars.scss" as *;
 
 .terminal {
     height: 200px;

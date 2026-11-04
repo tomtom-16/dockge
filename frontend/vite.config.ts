@@ -18,6 +18,16 @@ export default defineConfig({
     root: "./frontend",
     build: {
         outDir: "../frontend-dist",
+        emptyOutDir: true,
+        target: [ "es2020", "edge88", "firefox78", "chrome87", "safari14" ],
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                // Bootstrap 5 still uses legacy Sass internally.
+                quietDeps: true,
+            },
+        },
     },
     plugins: [
         vue(),

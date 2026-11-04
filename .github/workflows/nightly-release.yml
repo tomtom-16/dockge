@@ -40,10 +40,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Use Node.js 22
+      - name: Use Node.js 26
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
 
       - name: Install dependencies
         run: npm clean-install --no-fund

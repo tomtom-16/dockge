@@ -116,7 +116,7 @@
                 <!-- Ports -->
                 <div class="mb-4">
                     <label class="form-label">
-                        {{ $tc("port", 2) }}
+                        {{ $t("port", 2) }}
                     </label>
                     <ArrayInput name="ports" :display-name="$t('port')" placeholder="HOST:CONTAINER" />
                 </div>
@@ -124,7 +124,7 @@
                 <!-- Volumes -->
                 <div class="mb-4">
                     <label class="form-label">
-                        {{ $tc("volume", 2) }}
+                        {{ $t("volume", 2) }}
                     </label>
                     <ArrayInput name="volumes" :display-name="$t('volume')" placeholder="HOST:CONTAINER" />
                 </div>
@@ -145,7 +145,7 @@
                 <!-- Environment Variables -->
                 <div class="mb-4">
                     <label class="form-label">
-                        {{ $tc("environmentVariable", 2) }}
+                        {{ $t("environmentVariable", 2) }}
                     </label>
                     <ArrayInput name="environment" :display-name="$t('environmentVariable')" placeholder="KEY=VALUE" />
                 </div>
@@ -167,7 +167,7 @@
                 <!-- Network -->
                 <div class="mb-4">
                     <label class="form-label">
-                        {{ $tc("network", 2) }}
+                        {{ $t("network", 2) }}
                     </label>
 
                     <div v-if="networkList.length === 0 && service.networks && service.networks.length > 0" class="text-warning mb-3">
@@ -384,7 +384,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-@import "../styles/vars";
+@use "../styles/vars" as *;
 
 .container {
     .image {

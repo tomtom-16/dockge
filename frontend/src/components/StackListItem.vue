@@ -11,7 +11,6 @@
 import Uptime from "./Uptime.vue";
 
 export default {
-    emits: [ "selected" ],
     components: {
         Uptime
     },
@@ -47,6 +46,7 @@ export default {
             default: () => {}
         },
     },
+    emits: [ "selected" ],
     data() {
         return {
             isCollapsed: true,
@@ -117,7 +117,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../styles/vars.scss";
+@use "../styles/vars.scss" as *;
 
 .small-padding {
     padding-left: 5px !important;

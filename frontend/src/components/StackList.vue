@@ -84,7 +84,6 @@ import StackListItem from "../components/StackListItem.vue";
 import { CREATED_FILE, CREATED_STACK, EXITED, RUNNING, UNKNOWN } from "../../../common/util-common";
 
 export default {
-    emits: [ "stack-selected" ],
     components: {
         Confirm,
         StackListItem,
@@ -99,6 +98,7 @@ export default {
             type: Boolean,
         },
     },
+    emits: [ "stack-selected" ],
     data() {
         return {
             searchText: "",
@@ -400,7 +400,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../styles/vars.scss";
+@use "../styles/vars.scss" as *;
 
 .shadow-box {
     height: calc(100vh - 150px);

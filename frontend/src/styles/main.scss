@@ -1,5 +1,14 @@
-@import "vars.scss";
-@import "bootstrap/scss/bootstrap";
+@use "sass:color";
+@use "sass:meta";
+@use "vars.scss" as *;
+@use "bootstrap/scss/bootstrap" with (
+    $primary: $primary,
+    $danger: $danger,
+    $warning: $warning,
+    $link-color: $link-color,
+    $border-radius: $border-radius,
+    $dropdown-border-radius: $dropdown-border-radius,
+);
 @import "bootstrap-vue-next/dist/bootstrap-vue-next.css";
 
 #app {
@@ -177,7 +186,7 @@ optgroup {
     border-color: $bg-color;
 
     &:hover {
-        $hover-color: darken($bg-color, 3%);
+        $hover-color: color.adjust($bg-color, $lightness: -3%);
         background-color: $hover-color;
         border-color: $hover-color;
     }
@@ -376,7 +385,7 @@ optgroup {
         border-color: $bg-color;
 
         &:hover {
-            $hover-color: darken($bg-color, 3%);
+            $hover-color: color.adjust($bg-color, $lightness: -3%);
             background-color: $hover-color;
             border-color: $hover-color;
         }
@@ -731,4 +740,4 @@ code {
 }
 
 // Localization
-@import "localization.scss";
+@include meta.load-css("localization.scss");
