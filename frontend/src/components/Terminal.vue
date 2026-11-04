@@ -139,9 +139,15 @@ export default {
         }
         // Fit the terminal width to the div container size after terminal is created.
         this.updateTerminalSize();
+        this.terminalResizeObserver = new ResizeObserver(() => this.scheduleFit());
+        this.terminalResizeObserver.observe(this.$el);
+        document.fonts.ready.then(() => this.scheduleFit());
     },
 
     unmounted() {
+        this.disposed = true;
+        this.terminalResizeObserver?.disconnect();
+        cancelAnimationFrame(this.fitFrame);
         window.removeEventListener("resize", this.onResizeEvent); // Remove the resize event listener from the window object.
         this.$root.unbindTerminal(this.name);
         this.terminal.dispose();
@@ -272,7 +278,7 @@ export default {
          * Update the terminal size to fit the container size.
          *
          * If the terminalFitAddOn is not created, creates it, loads it and then fits the terminal to the appropriate size.
-         * It then addes an event listener to the window object to listen for resize events and calls the fit method of the terminalFitAddOn.
+         * Observe visible container sizes before fitting, including after v-show.
          */
         updateTerminalSize() {
             if (!Object.hasOwn(this, "terminalFitAddOn")) {
@@ -280,16 +286,31 @@ export default {
                 this.terminal.loadAddon(this.terminalFitAddOn);
                 window.addEventListener("resize", this.onResizeEvent);
             }
-            this.terminalFitAddOn.fit();
+            this.scheduleFit();
+        },
+        /** Coalesce layout changes and ignore hidden or unmounted terminals. */
+        scheduleFit() {
+            if (this.disposed) {
+                return;
+            }
+            cancelAnimationFrame(this.fitFrame);
+            this.fitFrame = requestAnimationFrame(() => this.onResizeEvent());
         },
         /**
          * Handles the resize event of the terminal component.
          */
         onResizeEvent() {
+            if (this.disposed || !this.$el.clientWidth || !this.$el.clientHeight) {
+                return;
+            }
             this.terminalFitAddOn.fit();
             let rows = this.terminal.rows;
             let cols = this.terminal.cols;
-            this.$root.emitAgent(this.endpoint, "terminalResize", this.name, rows, cols);
+            const sizeKey = `${this.name}:${rows}:${cols}`;
+            if (this.lastSize !== sizeKey) {
+                this.lastSize = sizeKey;
+                this.$root.emitAgent(this.endpoint, "terminalResize", this.name, rows, cols);
+            }
         },
 
         /**
@@ -378,6 +399,9 @@ export default {
 <style scoped lang="scss">
 .main-terminal {
     height: 100%;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
 }
 </style>
 
@@ -385,5 +409,7 @@ export default {
 .terminal {
     background-color: black !important;
     height: 100%;
+    min-width: 0;
+    max-width: 100%;
 }
 </style>

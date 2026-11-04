@@ -95,7 +95,7 @@
     "connecting...": "Connexion au serveur socket…",
     "url": "URL | URLs",
     "extra": "Supplémentaire",
-    "downStack": "Arrêtez et rendre inactif",
+    "downStack": "Arrêter et rendre inactif",
     "reverseProxyMsg1": "Utilisez vous un proxy inverse ?",
     "Cannot connect to the socket server.": "Impossible de se connecter au serveur socket.",
     "reconnecting...": "Reconnexion…",
@@ -128,5 +128,16 @@
     "Downed": "Abattu",
     "Lost connection to the socket server. Reconnecting...": "Connexion au serveur socket perdue. Reconnexion...",
     "CurrentHostname": "(Non défini : suivre le nom d'hôte actuel)",
-    "NoNetworksAvailable": "Aucun réseau disponible. Vous devez d'abord ajouter des réseaux internes ou activer les réseaux externes sur le côté droit."
+    "NoNetworksAvailable": "Aucun réseau disponible. Vous devez d'abord ajouter des réseaux internes ou activer les réseaux externes sur le côté droit.",
+    "stacks": "Stacks",
+    "viewLogs": "Logs",
+    "imageCleanup": "Nettoyer les images",
+    "imageCleanupDescription": "Supprime les images sans tag inutilisées sur l’hôte Docker sélectionné.",
+    "imageCleanupAll": "Supprimer aussi les images avec un tag sans conteneur associé",
+    "imageCleanupAllWarning": "Les images avec un tag inutilisées seront aussi supprimées. Les images conservées pour un futur déploiement ou un retour arrière devront éventuellement être téléchargées à nouveau.",
+    "imageCleanupRunning": "Nettoyage des images en cours…",
+    "imageCleanupConfirm": "Nettoyer les images sur {host} ? Cela concerne toutes les stacks de cet hôte.",
+    "imageCleanupPreserves": "Les images associées à des conteneurs démarrés ou arrêtés sont conservées. Les conteneurs, volumes et réseaux ne sont pas supprimés.",
+    "imageCleanupDone": "Nettoyage des images terminé.",
+    "imageCleanupNoResponse": "Aucune réponse de l’hôte. Le nettoyage peut être encore en cours. Vérifie la connexion et que cet agent dispose de la fonction de nettoyage."
 }

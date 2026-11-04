@@ -1,7 +1,7 @@
 <template>
     <div class="shadow-box big-padding mb-3 container">
         <div class="row">
-            <div class="col-5">
+            <div class="col-12 col-sm-5">
                 <h4>{{ name }}</h4>
                 <div class="image mb-2">
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
@@ -14,7 +14,7 @@
                     </a>
                 </div>
             </div>
-            <div class="col-7">
+            <div class="col-12 col-sm-7">
                 <div class="function">
                     <div class="btn-group me-2" role="group">
                         <router-link v-if="!isEditMode && (status === 'running' || status === 'healthy')" class="btn btn-normal" :to="terminalRouteLink" disabled="">
@@ -65,7 +65,7 @@
             </button>
         </div>
         <div v-else-if="statsInstances.length > 0" class="mt-2">
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
                 <template v-if="!expandedStats">
                     <div class="stats">
                         {{ $t('CPU') }}: {{ statsInstances[0].CPUPerc }}
@@ -388,6 +388,7 @@ export default defineComponent({
 
 .container {
     .image {
+        overflow-wrap: anywhere;
         font-size: 0.8rem;
         color: #6c757d;
         .tag {
@@ -402,11 +403,24 @@ export default defineComponent({
         width: 100%;
         align-items: center;
         justify-content: end;
+        .btn-group {
+            flex-wrap: wrap;
+        }
     }
 
     .stats {
         font-size: 0.8rem;
         color: #6c757d;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .container .function {
+        margin-top: 10px;
+        justify-content: start;
+        .btn-group {
+            gap: 4px;
+        }
     }
 }
 </style>

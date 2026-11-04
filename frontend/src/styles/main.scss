@@ -6,6 +6,43 @@
     font-family: BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, noto sans, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol, noto color emoji;
 }
 
+// Keep overflow inside terminals and editors instead of widening the page.
+html, body {
+    overflow-x: hidden;
+}
+
+@supports (overflow-x: clip) {
+    html, body {
+        overflow-x: clip;
+    }
+}
+
+.row > *, .shadow-box, .cm-editor, .cm-scroller {
+    min-width: 0;
+}
+
+.cm-editor {
+    max-width: 100%;
+}
+
+// Long code lines must scroll inside CodeMirror, including in flex/grid columns.
+.cm-editor .cm-scroller {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+h1, h4, .agent, .agent-select, .badge {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    .badge {
+        white-space: normal;
+        max-width: 100%;
+    }
+}
+
 h1 {
     font-size: 32px;
 }

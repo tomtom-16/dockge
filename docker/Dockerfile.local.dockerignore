@@ -1,0 +1,17 @@
+.git
+.codex
+.agents
+.aws
+.env
+.env.*
+node_modules
+frontend-dist
+data
+stacks
+tmp
+private
+.idea
+*.tar
+*.tar.gz
+playwright-report
+test-results

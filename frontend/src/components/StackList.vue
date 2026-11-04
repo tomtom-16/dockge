@@ -1,5 +1,5 @@
 <template>
-    <div class="shadow-box mb-3" :style="boxStyle">
+    <div class="shadow-box mb-3" :style="boxStyle" :class="{ collapsed }">
         <div class="list-header">
             <div class="header-top">
                 <!-- TODO -->
@@ -10,8 +10,8 @@
                     {{ $t("Select") }}
                 </button>
 
-                <div class="placeholder"></div>
-                <div class="search-wrapper">
+                <slot name="toggle"><div class="placeholder"></div></slot>
+                <div v-show="!collapsed" class="search-wrapper">
                     <a v-if="searchText == ''" class="search-icon">
                         <font-awesome-icon icon="search" />
                     </a>
@@ -47,7 +47,7 @@
                 </span>
             </div>
         </div>
-        <div ref="stackList" class="stack-list" :class="{ scrollbar: scrollbar }" :style="stackListStyle">
+        <div v-show="!collapsed" id="dashboard-stacks" ref="stackList" class="stack-list" :class="{ scrollbar: scrollbar }" :style="stackListStyle">
             <div v-if="agentStackList[0] && agentStackList[0].stacks.length === 0" class="text-center mt-3">
                 <router-link to="/compose">{{ $t("addFirstStackMsg") }}</router-link>
             </div>
@@ -67,6 +67,7 @@
                     v-for="(item, index) in agent.stacks"
                     v-show="$root.agentCount === 1 || !closedAgents.get(agent.endpoint)" :key="index" :stack="item" :isSelectMode="selectMode"
                     :isSelected="isSelected" :select="select" :deselect="deselect"
+                    @selected="$emit('stack-selected')"
                 />
             </div>
         </div>
@@ -83,11 +84,16 @@ import StackListItem from "../components/StackListItem.vue";
 import { CREATED_FILE, CREATED_STACK, EXITED, RUNNING, UNKNOWN } from "../../../common/util-common";
 
 export default {
+    emits: [ "stack-selected" ],
     components: {
         Confirm,
         StackListItem,
     },
     props: {
+        collapsed: {
+            type: Boolean,
+            default: false,
+        },
         /** Should the scrollbar be shown */
         scrollbar: {
             type: Boolean,
@@ -117,6 +123,9 @@ export default {
          * @returns {object} Style for stack list
          */
         boxStyle() {
+            if (this.$root.isMobile) {
+                return { height: "auto" };
+            }
             if (window.innerWidth > 550) {
                 return {
                     height: `calc(100vh - 160px + ${this.windowTop}px)`,
@@ -232,6 +241,9 @@ export default {
         },
 
         stackListStyle() {
+            if (this.$root.isMobile) {
+                return { height: "auto" };
+            }
             //let listHeaderHeight = 107;
             let listHeaderHeight = 60;
 
@@ -420,14 +432,28 @@ export default {
     align-items: center;
 }
 
+.collapsed .list-header {
+    margin-bottom: -10px;
+    border-bottom: 0;
+    border-radius: 10px;
+}
+
 .header-filter {
     display: flex;
     align-items: center;
 }
 
-@media (max-width: 770px) {
+@media (max-width: 767.98px) {
+    .shadow-box {
+        position: static;
+    }
+
+    .stack-list.scrollbar {
+        overflow: visible;
+    }
+
     .list-header {
-        margin: -20px;
+        margin: -10px;
         margin-bottom: 10px;
         padding: 5px;
     }
@@ -436,6 +462,7 @@ export default {
 .search-wrapper {
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 
 .search-icon {
@@ -455,6 +482,7 @@ export default {
 
 .search-input {
     max-width: 15em;
+    min-width: 0;
 }
 
 .stack-item {

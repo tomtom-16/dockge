@@ -22,6 +22,7 @@ import "./styles/main.scss";
 import socket from "./mixins/socket";
 import lang from "./mixins/lang";
 import theme from "./mixins/theme";
+import viewport from "./mixins/viewport";
 
 // Set Title
 document.title = document.title + " - " + location.host;
@@ -48,6 +49,7 @@ function rootApp() {
             socket,
             lang,
             theme,
+            viewport,
         ],
         data() {
             return {

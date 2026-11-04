@@ -148,5 +148,16 @@
     "rmCode": "rm",
     "rmRfCode": "rm -rf",
     "envVarCode": "DOCKGE_ENABLE_CONSOLE=true",
-    "confirmLeaveStack": "You are currently editing a stack. Are you sure you want to leave?"
+    "confirmLeaveStack": "You are currently editing a stack. Are you sure you want to leave?",
+    "stacks": "Stacks",
+    "viewLogs": "Logs",
+    "imageCleanup": "Clean up images",
+    "imageCleanupDescription": "Remove dangling images on the selected Docker host.",
+    "imageCleanupAll": "Also remove tagged images not referenced by any container",
+    "imageCleanupAllWarning": "Unused tagged images will also be deleted. Images kept for future deployments or rollback may need to be downloaded again.",
+    "imageCleanupRunning": "Image cleanup in progress…",
+    "imageCleanupConfirm": "Clean up images on {host}? This applies to all stacks on this host.",
+    "imageCleanupPreserves": "Images referenced by running or stopped containers are kept. Containers, volumes and networks are not deleted.",
+    "imageCleanupDone": "Image cleanup completed.",
+    "imageCleanupNoResponse": "No response from the host. Cleanup may still be running. Check the connection and ensure this agent supports image cleanup."
 }

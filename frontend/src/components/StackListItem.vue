@@ -1,5 +1,5 @@
 <template>
-    <router-link :to="url" :class="{ 'dim' : !stack.isManagedByDockge }" class="item">
+    <router-link :to="url" :class="{ 'dim' : !stack.isManagedByDockge }" class="item" @click="$emit('selected')">
         <Uptime :stack="stack" :fixed-width="true" class="me-2" />
         <div class="title">
             <span>{{ stackName }}</span>
@@ -11,6 +11,7 @@
 import Uptime from "./Uptime.vue";
 
 export default {
+    emits: [ "selected" ],
     components: {
         Uptime
     },
@@ -148,6 +149,8 @@ export default {
     }
     .title {
         margin-top: -4px;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
     .endpoint {
         font-size: 12px;

@@ -180,6 +180,9 @@ export class TerminalSocketHandler extends AgentSocketHandler {
                 if (typeof cols !== "number") {
                     throw new Error("Command must be a number.");
                 }
+                if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows < 1 || cols < 2 || rows > 1000 || cols > 1000) {
+                    throw new Error("Invalid terminal dimensions.");
+                }
 
                 let terminal = Terminal.getTerminal(terminalName);
 

@@ -8,7 +8,7 @@
                         v-model="settings.globalENV"
                         :extensions="extensionsEnv"
                         minimal
-                        wrap="true"
+                        :wrap="false"
                         dark="true"
                         tab="true"
                         :hasFocus="editorFocus"

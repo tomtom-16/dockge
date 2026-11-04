@@ -24,7 +24,10 @@
         "start-docker": "docker run --rm -p 5001:5001 --name dockge louislam/dockge:latest",
         "mark-as-nightly": "tsx ./extra/mark-as-nightly.ts",
         "reformat-changelog": "tsx ./extra/reformat-changelog.ts",
-        "reset-password": "tsx ./extra/reset-password.ts"
+        "reset-password": "tsx ./extra/reset-password.ts",
+        "test:maintenance": "tsx --test tests/docker-maintenance.test.ts",
+        "build:local": "docker buildx build --platform linux/amd64 -f docker/Dockerfile.local -t ghcr.io/tomtom-16/dockge:mobile-v1 --load .",
+        "publish:local": "docker push --platform linux/amd64 ghcr.io/tomtom-16/dockge:mobile-v1"
     },
     "dependencies": {
         "@homebridge/node-pty-prebuilt-multiarch": "0.11.14",

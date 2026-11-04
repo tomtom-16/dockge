@@ -9,7 +9,7 @@
                 </span>
             </h1>
 
-            <div v-if="stack.isManagedByDockge" class="mb-3">
+            <div v-if="stack.isManagedByDockge" class="mb-3 stack-actions" :class="{ 'compact-actions': !isEditMode, 'edit-actions': isEditMode }">
                 <div class="btn-group me-2" role="group">
                     <button v-if="isEditMode" class="btn btn-primary" :disabled="processing" @click="deployStack">
                         <font-awesome-icon icon="rocket" class="me-1" />
@@ -21,44 +21,52 @@
                         {{ $t("saveStackDraft") }}
                     </button>
 
-                    <button v-if="!isEditMode" class="btn btn-secondary" :disabled="processing" @click="enableEditMode">
+                    <button v-if="isEditMode && !isAdd" class="btn btn-normal" :disabled="processing" @click="discardStack">
+                        <font-awesome-icon icon="square-xmark" class="me-1" />
+                        {{ $t("discardStack") }}
+                    </button>
+
+                    <button v-if="!isEditMode" class="btn btn-secondary" :disabled="processing" :aria-label="$t('editStack')" :title="$t('editStack')" @click="enableEditMode">
                         <font-awesome-icon icon="pen" class="me-1" />
-                        {{ $t("editStack") }}
+                        <span class="action-label">{{ $t("editStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode && !active" class="btn btn-primary" :disabled="processing" @click="startStack">
+                    <button v-if="!isEditMode && !active" class="btn btn-primary" :disabled="processing" :aria-label="$t('startStack')" :title="$t('startStack')" @click="startStack">
                         <font-awesome-icon icon="play" class="me-1" />
-                        {{ $t("startStack") }}
+                        <span class="action-label">{{ $t("startStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode && active" class="btn btn-normal " :disabled="processing" @click="restartStack">
+                    <button v-if="!isEditMode && active" class="btn btn-normal " :disabled="processing" :aria-label="$t('restartStack')" :title="$t('restartStack')" @click="restartStack">
                         <font-awesome-icon icon="rotate" class="me-1" />
-                        {{ $t("restartStack") }}
+                        <span class="action-label">{{ $t("restartStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode" class="btn btn-normal" :disabled="processing" @click="updateStack">
+                    <button v-if="!isEditMode" class="btn btn-normal" :disabled="processing" :aria-label="$t('updateStack')" :title="$t('updateStack')" @click="updateStack">
                         <font-awesome-icon icon="cloud-arrow-down" class="me-1" />
-                        {{ $t("updateStack") }}
+                        <span class="action-label">{{ $t("updateStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode && active" class="btn btn-normal" :disabled="processing" @click="stopStack">
+                    <button v-if="!isEditMode && active" class="btn btn-normal" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
                         <font-awesome-icon icon="stop" class="me-1" />
-                        {{ $t("stopStack") }}
+                        <span class="action-label">{{ $t("stopStack") }}</span>
                     </button>
 
-                    <BDropdown right text="" variant="normal">
+                    <BDropdown v-if="!isEditMode" right text="" variant="normal" :disabled="processing">
                         <BDropdownItem @click="downStack">
                             <font-awesome-icon icon="stop" class="me-1" />
                             {{ $t("downStack") }}
                         </BDropdownItem>
                     </BDropdown>
-                </div>
 
-                <button v-if="isEditMode && !isAdd" class="btn btn-normal" :disabled="processing" @click="discardStack">{{ $t("discardStack") }}</button>
-                <button v-if="!isEditMode" class="btn btn-danger" :disabled="processing" @click="showDeleteDialog = !showDeleteDialog">
-                    <font-awesome-icon icon="trash" class="me-1" />
-                    {{ $t("deleteStack") }}
-                </button>
+                    <button v-if="!isEditMode" class="btn btn-danger" :disabled="processing" :aria-label="$t('deleteStack')" :title="$t('deleteStack')" @click="showDeleteDialog = !showDeleteDialog">
+                        <font-awesome-icon icon="trash" class="me-1" />
+                        <span class="action-label">{{ $t("deleteStack") }}</span>
+                    </button>
+                    <button v-if="!isEditMode" class="btn btn-normal d-md-none" :aria-label="$t('viewLogs')" :title="$t('viewLogs')" @click="$refs.combinedTerminal.$el.scrollIntoView({ block: 'start', behavior: 'smooth' })">
+                        <font-awesome-icon icon="terminal" class="me-1" />
+                        <span class="action-label">{{ $t("viewLogs") }}</span>
+                    </button>
+                </div>
             </div>
 
             <!-- URLs -->
@@ -107,36 +115,43 @@
                     </div>
 
                     <!-- Containers -->
-                    <h4 class="mb-3">{{ $tc("container", 2) }}</h4>
-
-                    <div v-if="isEditMode" class="input-group mb-3">
-                        <input
-                            v-model="newContainerName"
-                            :placeholder="$t(`New Container Name...`)"
-                            class="form-control"
-                            @keyup.enter="addContainer"
-                        />
-                        <button class="btn btn-primary" @click="addContainer">
-                            {{ $t("addContainer") }}
+                    <h4 class="mb-3 d-flex align-items-center gap-2">
+                        {{ $tc("container", 2) }}
+                        <button class="btn btn-normal rounded-pill container-toggle" type="button" :aria-label="$tc('container', 2)" :aria-expanded="containersOpen" aria-controls="compose-containers" @click="containersOpen = !containersOpen">
+                            <font-awesome-icon :icon="containersOpen ? 'chevron-up' : 'chevron-down'" />
                         </button>
-                    </div>
+                    </h4>
 
-                    <div ref="containerList">
-                        <Container
-                            v-for="(service, name) in jsonConfig.services"
-                            :key="name"
-                            :name="name"
-                            :is-edit-mode="isEditMode"
-                            :first="name === Object.keys(jsonConfig.services)[0]"
-                            :serviceStatus="serviceStatusList[name]"
-                            :dockerStats="dockerStats"
-                            @start-service="startService"
-                            @stop-service="stopService"
-                            @restart-service="restartService"
-                        />
-                    </div>
+                    <div v-show="containersOpen" id="compose-containers">
+                        <div v-if="isEditMode" class="input-group mb-3">
+                            <input
+                                v-model="newContainerName"
+                                :placeholder="$t(`New Container Name...`)"
+                                class="form-control"
+                                @keyup.enter="addContainer"
+                            />
+                            <button class="btn btn-primary" @click="addContainer">
+                                {{ $t("addContainer") }}
+                            </button>
+                        </div>
 
-                    <button v-if="false && isEditMode && jsonConfig.services && Object.keys(jsonConfig.services).length > 0" class="btn btn-normal mb-3" @click="addContainer">{{ $t("addContainer") }}</button>
+                        <div ref="containerList">
+                            <Container
+                                v-for="(service, name) in jsonConfig.services"
+                                :key="name"
+                                :name="name"
+                                :is-edit-mode="isEditMode"
+                                :first="name === Object.keys(jsonConfig.services)[0]"
+                                :serviceStatus="serviceStatusList[name]"
+                                :dockerStats="dockerStats"
+                                @start-service="startService"
+                                @stop-service="stopService"
+                                @restart-service="restartService"
+                            />
+                        </div>
+
+                        <button v-if="false && isEditMode && jsonConfig.services && Object.keys(jsonConfig.services).length > 0" class="btn btn-normal mb-3" @click="addContainer">{{ $t("addContainer") }}</button>
+                    </div>
 
                     <!-- General -->
                     <div v-if="isEditMode">
@@ -176,7 +191,7 @@
                             v-model="stack.composeYAML"
                             :extensions="extensions"
                             minimal
-                            wrap="true"
+                            :wrap="false"
                             dark="true"
                             tab="true"
                             :disabled="!isEditMode"
@@ -197,7 +212,7 @@
                                 v-model="stack.composeENV"
                                 :extensions="extensionsEnv"
                                 minimal
-                                wrap="true"
+                                :wrap="false"
                                 dark="true"
                                 tab="true"
                                 :disabled="!isEditMode"
@@ -325,6 +340,7 @@ export default {
     yamlDoc: null,  // For keeping the yaml comments
     data() {
         return {
+            containersOpen: true,
             jsonConfig: {},
             envsubstJSONConfig: {},
             yamlError: "",
@@ -861,5 +877,76 @@ export default {
 .agent-name {
     font-size: 13px;
     color: $dark-font-color3;
+}
+
+.container-toggle {
+    min-width: 44px;
+    min-height: 36px;
+}
+
+.edit-actions > .btn-group {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+
+    > .btn {
+        border-radius: 6px !important;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    // Keep editable text at 16px to avoid Safari zooming when it receives focus.
+    .editor-box :deep(.cm-editor),
+    .editor-box :deep(.cm-scroller),
+    .editor-box :deep(.cm-content) {
+        font-size: 16px;
+    }
+
+    .stack-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        > .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-right: 0 !important;
+
+            > .btn, > :deep(.dropdown > .btn) {
+                border-radius: 6px !important;
+                margin-left: 0;
+            }
+        }
+    }
+
+    .compact-actions > .btn-group {
+        width: 100%;
+        flex-wrap: nowrap;
+
+        > .btn, > :deep(.dropdown > .btn) {
+            min-width: 0;
+            min-height: 44px;
+            padding: 8px;
+        }
+
+        .action-label {
+            display: none;
+        }
+
+        .svg-inline--fa {
+            margin-right: 0 !important;
+        }
+    }
+
+    .edit-actions > .btn-group {
+        flex-wrap: nowrap;
+
+        > .btn {
+            padding: 8px;
+            white-space: nowrap;
+        }
+    }
 }
 </style>

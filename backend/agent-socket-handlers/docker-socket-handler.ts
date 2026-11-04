@@ -3,10 +3,24 @@ import { DockgeServer } from "../dockge-server";
 import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationError } from "../util-server";
 import { Stack } from "../stack";
 import { AgentSocket } from "../../common/agent-socket";
+import { pruneImages } from "../docker-maintenance";
 
 export class DockerSocketHandler extends AgentSocketHandler {
     create(socket : DockgeSocket, server : DockgeServer, agentSocket : AgentSocket) {
         // Do not call super.create()
+
+        agentSocket.on("pruneImages", async (all: unknown, callback) => {
+            try {
+                checkLogin(socket);
+                const output = await pruneImages(all);
+                callbackResult({
+                    ok: true,
+                    output,
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
 
         agentSocket.on("deployStack", async (name : unknown, composeYAML : unknown, composeENV : unknown, isAdd : unknown, callback) => {
             try {

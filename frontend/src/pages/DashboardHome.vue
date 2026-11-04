@@ -33,6 +33,7 @@
                     </div>
 
                     <button class="btn-normal btn mb-4" @click="convertDockerRun">{{ $t("Convert to Compose") }}</button>
+                    <ImageCleanup />
                 </div>
                 <!-- Right -->
                 <div class="col-md-5">
@@ -113,10 +114,11 @@
 
 <script>
 import { statusNameShort } from "../../../common/util-common";
+import ImageCleanup from "../components/ImageCleanup.vue";
 
 export default {
     components: {
-
+        ImageCleanup,
     },
     props: {
         calculatedHeight: {
@@ -361,7 +363,8 @@ table {
 .docker-run {
     border: none;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 15px;
+    // Keep editable text at 16px to avoid Safari zooming when it receives focus.
+    font-size: 16px;
 }
 
 .first-row .shadow-box {
