@@ -46,12 +46,12 @@
                         <span class="action-label">{{ $t("updateStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode && active" class="btn btn-normal" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
+                    <button v-if="!isEditMode && active" class="btn btn-normal stop-stack-button" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
                         <font-awesome-icon icon="stop" class="me-1" />
                         <span class="action-label">{{ $t("stopStack") }}</span>
                     </button>
 
-                    <BDropdown v-if="!isEditMode" right text="" variant="normal" :disabled="processing">
+                    <BDropdown v-if="!isEditMode" :class="{ 'stop-dropdown-joined': active }" right text="" variant="normal" :disabled="processing">
                         <BDropdownItem @click="downStack">
                             <font-awesome-icon icon="stop" class="me-1" />
                             {{ $t("downStack") }}
@@ -61,10 +61,6 @@
                     <button v-if="!isEditMode" class="btn btn-danger" :disabled="processing" :aria-label="$t('deleteStack')" :title="$t('deleteStack')" @click="showDeleteDialog = !showDeleteDialog">
                         <font-awesome-icon icon="trash" class="me-1" />
                         <span class="action-label">{{ $t("deleteStack") }}</span>
-                    </button>
-                    <button v-if="!isEditMode" class="btn btn-normal d-md-none" :aria-label="$t('viewLogs')" :title="$t('viewLogs')" @click="$refs.combinedTerminal.$el.scrollIntoView({ block: 'start', behavior: 'smooth' })">
-                        <font-awesome-icon icon="terminal" class="me-1" />
-                        <span class="action-label">{{ $t("viewLogs") }}</span>
                     </button>
                 </div>
             </div>
@@ -172,6 +168,7 @@
                         <h4 class="mb-3">{{ $t("terminal") }}</h4>
                         <Terminal
                             ref="combinedTerminal"
+                            no-wrap
                             class="mb-3 terminal"
                             :name="combinedTerminalName"
                             :endpoint="endpoint"
@@ -929,6 +926,21 @@ export default {
             min-width: 0;
             min-height: 44px;
             padding: 8px;
+        }
+
+        > .stop-stack-button {
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+
+        > .stop-dropdown-joined {
+            // Cancel the 4px gap and overlap the shared border.
+            margin-left: -5px;
+        }
+
+        > :deep(.stop-dropdown-joined > .btn) {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
         }
 
         .action-label {

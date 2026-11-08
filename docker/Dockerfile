@@ -33,8 +33,8 @@ WORKDIR /app
 COPY --chown=node:node  ./package.json ./package.json
 COPY --chown=node:node  ./package-lock.json ./package-lock.json
 # SQLite prebuilds require a newer glibc; compile against Bookworm instead.
-RUN npm ci --omit=dev
-RUN npm --prefix node_modules/sqlite3 run rebuild
+RUN PYTHON=/usr/bin/python3 npm_config_nodedir=/usr/local npm_config_build_from_source=sqlite3 \
+    npm ci --omit=dev --foreground-scripts
 # Only the native addon is needed at runtime, not the compiler intermediates.
 RUN find node_modules/sqlite3/build -type f ! -path "*/Release/node_sqlite3.node" -delete
 COPY tests/native-modules.test.ts tests/dependency-compatibility.test.ts ./tests/

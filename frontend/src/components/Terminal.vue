@@ -1,6 +1,6 @@
 <template>
     <div class="shadow-box">
-        <div v-pre ref="terminal" class="main-terminal"></div>
+        <div ref="terminal" class="main-terminal" :class="{ 'no-wrap': noWrap }"></div>
     </div>
 </template>
 
@@ -56,6 +56,11 @@ export default {
             default: TERMINAL_COLS,
         },
 
+        noWrap: {
+            type: Boolean,
+            default: false,
+        },
+
         // Mode
         // displayOnly: Only display terminal output
         // mainTerminal: Allow input limited commands and output
@@ -89,7 +94,15 @@ export default {
             cursorBlink,
             cols: this.cols,
             rows: this.rows,
+            reflowCursorLine: this.noWrap,
         });
+
+        // Serialize log writes so cursor restoration finishes before the next chunk.
+        this.logWriteQueue = [];
+        this.logWriter = { write: data => {
+            this.logWriteQueue.push(data);
+            this.flushLogWrites();
+        } };
 
         if (this.mode === "mainTerminal") {
             this.mainTerminalConfig();
@@ -155,15 +168,79 @@ export default {
     },
 
     methods: {
+        flushLogWrites() {
+            if (this.writingLogs || this.disposed || !this.logWriteQueue.length) {
+                return;
+            }
+            this.writingLogs = true;
+            this.terminal.write(this.logWriteQueue.shift(), () => {
+                if (this.disposed) {
+                    return;
+                }
+                const cursor = this.expandLogLines();
+                const done = () => {
+                    this.writingLogs = false;
+                    this.flushLogWrites();
+                };
+                if (cursor) {
+                    this.terminal.write(cursor, done);
+                } else {
+                    done();
+                }
+            });
+        },
+
+        /** Exclude the empty padding cell inserted when a wide character wraps. */
+        wrappedLineWidth(line, nextLine) {
+            const lastCell = line.getCell(line.length - 1);
+            return line.length - (!lastCell.getChars() && lastCell.getWidth() === 1 && nextLine.getCell(0).getWidth() === 2 ? 1 : 0);
+        },
+
+        /** Expand the terminal grid to keep logical log lines on a single row. */
+        expandLogLines() {
+            const buffer = this.terminal.buffer.active;
+            let cursorColumn = buffer.cursorX;
+            for (let index = buffer.baseY + buffer.cursorY; index > 0 && buffer.getLine(index).isWrapped; index--) {
+                cursorColumn += this.wrappedLineWidth(buffer.getLine(index - 1), buffer.getLine(index));
+            }
+            let columns = this.terminal.cols;
+            let lineWidth = 0;
+            for (let index = 0; index < buffer.length; index++) {
+                const line = buffer.getLine(index);
+                if (!line.isWrapped) {
+                    lineWidth = 0;
+                }
+                const nextLine = buffer.getLine(index + 1);
+                if (nextLine?.isWrapped) {
+                    lineWidth += this.wrappedLineWidth(line, nextLine);
+                } else {
+                    for (let column = line.length - 1; column >= 0; column--) {
+                        const cell = line.getCell(column);
+                        if (cell.getChars()) {
+                            lineWidth += column + cell.getWidth();
+                            break;
+                        }
+                    }
+                    // Leave room for the cursor at the end of an unfinished line.
+                    columns = Math.max(columns, lineWidth + 1);
+                }
+            }
+            if (columns > this.terminal.cols) {
+                this.terminal.resize(columns, this.terminal.rows);
+                // xterm reflows text, but leaves the cursor's column unchanged.
+                return `\x1b[${cursorColumn + 1}G`;
+            }
+        },
+
         bind(endpoint, name) {
             // Workaround: normally this.name should be set, but it is not sometimes, so we use the parameter, but eventually this.name and name must be the same name
             if (name) {
                 this.$root.unbindTerminal(name);
-                this.$root.bindTerminal(endpoint, name, this.terminal);
+                this.$root.bindTerminal(endpoint, name, this.noWrap ? this.logWriter : this.terminal);
                 console.debug("Terminal bound via parameter: " + name);
             } else if (this.name) {
                 this.$root.unbindTerminal(this.name);
-                this.$root.bindTerminal(this.endpoint, this.name, this.terminal);
+                this.$root.bindTerminal(this.endpoint, this.name, this.noWrap ? this.logWriter : this.terminal);
                 console.debug("Terminal bound: " + this.name);
             } else {
                 console.debug("Terminal name not set");
@@ -303,7 +380,16 @@ export default {
             if (this.disposed || !this.$el.clientWidth || !this.$el.clientHeight) {
                 return;
             }
-            this.terminalFitAddOn.fit();
+            if (this.noWrap) {
+                const dimensions = this.terminalFitAddOn.proposeDimensions();
+                if (!dimensions) {
+                    return;
+                }
+                // Keep long lines intact when the viewport becomes narrower.
+                this.terminal.resize(Math.max(this.terminal.cols, dimensions.cols), dimensions.rows);
+            } else {
+                this.terminalFitAddOn.fit();
+            }
             let rows = this.terminal.rows;
             let cols = this.terminal.cols;
             const sizeKey = `${this.name}:${rows}:${cols}`;
@@ -402,6 +488,10 @@ export default {
     min-width: 0;
     width: 100%;
     overflow: hidden;
+
+    &.no-wrap {
+        overflow-x: auto;
+    }
 }
 </style>
 

@@ -3,7 +3,7 @@
         <div class="row">
             <div class="col-12 col-sm-5">
                 <h4>{{ name }}</h4>
-                <div class="image mb-2">
+                <div v-if="imageName" class="image mb-2">
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
                 </div>
                 <div v-if="!isEditMode">
@@ -17,36 +17,39 @@
             <div class="col-12 col-sm-7">
                 <div class="function">
                     <div class="btn-group me-2" role="group">
-                        <router-link v-if="!isEditMode && (status === 'running' || status === 'healthy')" class="btn btn-normal" :to="terminalRouteLink" disabled="">
+                        <router-link v-if="!isEditMode && (status === 'running' || status === 'healthy')" class="btn btn-normal" :to="terminalRouteLink" title="Bash" disabled="">
                             <font-awesome-icon icon="terminal" />
-                            Bash
+                            <span :class="{ 'visually-hidden': serviceCount > 1 }">Bash</span>
                         </router-link>
                         <button
                             v-if="serviceCount > 1 && !isEditMode && status !== 'running' && status !== 'healthy'"
                             class="btn btn-primary"
+                            :title="$t('startStack')"
                             :disabled="processing"
                             @click="startService"
                         >
-                            <font-awesome-icon icon="play" class="me-1" />
-                            {{ $t("startStack") }}
+                            <font-awesome-icon icon="play" />
+                            <span class="visually-hidden">{{ $t("startStack") }}</span>
                         </button>
                         <button
                             v-if="serviceCount > 1 && !isEditMode && (status === 'running' || status === 'healthy' || status === 'unhealthy')"
                             class="btn btn-normal"
+                            :title="$t('restartStack')"
                             :disabled="processing"
                             @click="restartService"
                         >
-                            <font-awesome-icon icon="rotate" class="me-1" />
-                            {{ $t("restartStack") }}
+                            <font-awesome-icon icon="rotate" />
+                            <span class="visually-hidden">{{ $t("restartStack") }}</span>
                         </button>
                         <button
                             v-if="serviceCount > 1 && !isEditMode && (status === 'running' || status === 'healthy' || status === 'unhealthy')"
                             class="btn btn-normal"
+                            :title="$t('stopStack')"
                             :disabled="processing"
                             @click="stopService"
                         >
-                            <font-awesome-icon icon="stop" class="me-1" />
-                            {{ $t("stopStack") }}
+                            <font-awesome-icon icon="stop" />
+                            <span class="visually-hidden">{{ $t("stopStack") }}</span>
                         </button>
                     </div>
                 </div>

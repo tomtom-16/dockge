@@ -17,6 +17,10 @@ healthcheck, exécute ESLint, TypeScript et les tests du nettoyage, puis assembl
 les dépendances Linux avec Node 26 et vérifie le terminal natif ainsi que SQLite.
 Le pilote officiel `sqlite3` est compilé dans Debian Bookworm pour éviter les
 incompatibilités de ses binaires précompilés avec la glibc de cette image.
+Cette compilation est imposée dès `npm ci`, avec Python à `/usr/bin/python3`
+et les en-têtes Node de l'image à `/usr/local`, sans téléchargement du binaire
+SQLite précompilé ni des en-têtes. Les sorties des scripts natifs sont affichées
+pendant la construction pour faciliter le diagnostic.
 Aucun `npm install` sur macOS n'est nécessaire pour cette construction.
 Node 26 prend en charge AMD64 et ARM64 ; les scripts
 de publication ne ciblent plus ARMv7, absent des images officielles Node 26.
