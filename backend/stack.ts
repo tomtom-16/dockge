@@ -16,7 +16,7 @@ import {
     UNKNOWN
 } from "../common/util-common";
 import { InteractiveTerminal, Terminal } from "./terminal";
-import childProcessAsync from "promisify-child-process";
+import * as childProcessAsync from "promisify-child-process";
 import { Settings } from "./settings";
 
 export class Stack {
@@ -521,7 +521,12 @@ export class Stack {
 
             let lines = res.stdout?.toString().split("\n");
 
-            const addLine = (obj: { Service: string, State: string, Name: string, Health: string }) => {
+            const addLine = (obj: {
+                Service: string;
+                State: string;
+                Name: string;
+                Health: string;
+            }) => {
                 if (!statusList.has(obj.Service)) {
                     statusList.set(obj.Service, []);
                 }

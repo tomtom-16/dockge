@@ -31,12 +31,12 @@ jobs:
           git config --global core.eol lf
 
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{matrix.node}}
 
@@ -51,6 +51,10 @@ jobs:
 
       - name: Check native modules
         run: npm run test:native && npm run test:compat
+
+      - name: Check SQLite on Debian Trixie
+        if: matrix.os == 'ubuntu-latest'
+        run: docker build --target dependencies -f docker/Dockerfile.local .
 
       - name: Build
         run: npm run build:frontend

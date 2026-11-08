@@ -1,4 +1,11 @@
-FROM node:26-bookworm-slim AS base
+# Native build-time transformer for cross-platform compatibility tests.
+FROM --platform=$BUILDPLATFORM node:26-trixie-slim AS build_tools
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+RUN node -e 'require("node:fs").copyFileSync(require.resolve("@esbuild/" + process.platform + "-" + process.arch + "/bin/esbuild"), "/esbuild-native")'
+
+FROM node:26-trixie-slim AS base
 RUN apt update && apt install --yes --no-install-recommends \
     curl \
     ca-certificates \
@@ -22,7 +29,12 @@ RUN apt update && apt install --yes --no-install-recommends \
 ############################################
 # Healthcheck Binary
 ############################################
-FROM louislam/dockge:build-healthcheck AS build_healthcheck
+FROM --platform=$BUILDPLATFORM golang:1.27.3-trixie AS build_healthcheck
+WORKDIR /app
+ARG TARGETOS
+ARG TARGETARCH
+COPY extra/healthcheck.go ./extra/healthcheck.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o ./extra/healthcheck ./extra/healthcheck.go
 
 ############################################
 # Build
@@ -30,17 +42,26 @@ FROM louislam/dockge:build-healthcheck AS build_healthcheck
 FROM base AS build
 RUN apt-get update && apt-get install --yes --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Link the pinned upstream SQLite statically; runtime needs no SQLite system library.
+COPY extra/build-sqlite.mjs ./extra/build-sqlite.mjs
+RUN node extra/build-sqlite.mjs /opt/sqlite
 COPY --chown=node:node  ./package.json ./package.json
 COPY --chown=node:node  ./package-lock.json ./package-lock.json
-# SQLite prebuilds require a newer glibc; compile against Bookworm instead.
-RUN PYTHON=/usr/bin/python3 npm_config_nodedir=/usr/local npm_config_build_from_source=sqlite3 \
+RUN PYTHON=/usr/bin/python3 npm_config_nodedir=/usr/local npm_config_build_from_source=sqlite3 npm_config_sqlite=/opt/sqlite \
     npm ci --omit=dev --foreground-scripts
 # Only the native addon is needed at runtime, not the compiler intermediates.
 RUN find node_modules/sqlite3/build -type f ! -path "*/Release/node_sqlite3.node" -delete
-COPY tests/native-modules.test.ts tests/dependency-compatibility.test.ts ./tests/
+COPY tests/native-modules.test.ts tests/dependency-compatibility.test.ts tests/http-compatibility.test.ts ./tests/
 COPY backend ./backend
 COPY common ./common
-RUN npm run test:native && npm run test:compat
+COPY --from=build_tools /esbuild-native /tmp/esbuild-native
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+# Run the architecture-independent TS transformer natively when testing under QEMU.
+# The runtime image retains its target-native esbuild binary.
+RUN node -e 'require("node:assert/strict").equal(require("sqlite3").VERSION, "3.54.1")' \
+    && if [ "$BUILDPLATFORM" != "$TARGETPLATFORM" ]; then export ESBUILD_BINARY_PATH=/tmp/esbuild-native; fi \
+    && npm run test:native && npm run test:compat
 
 ############################################
 # ⭐ Main Image

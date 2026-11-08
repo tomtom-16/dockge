@@ -1,39 +1,49 @@
 # syntax=docker/dockerfile:1
 # Build assets natively on the Mac's Linux builder; only runtime deps use emulation.
-FROM --platform=$BUILDPLATFORM node:26-bookworm-slim AS frontend
+FROM --platform=$BUILDPLATFORM node:26-trixie-slim AS frontend
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
+RUN node -e 'require("node:fs").copyFileSync(require.resolve("@esbuild/" + process.platform + "-" + process.arch + "/bin/esbuild"), "/esbuild-native")'
 COPY . .
 RUN npm run lint && npm run check-ts && npm run test:maintenance && npm run build:frontend
 
-FROM --platform=$BUILDPLATFORM golang:1.24-bookworm AS healthcheck
+FROM --platform=$BUILDPLATFORM golang:1.27.3-trixie AS healthcheck
 WORKDIR /app
 ARG TARGETARCH
 ARG TARGETOS
 COPY extra/healthcheck.go ./
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /healthcheck healthcheck.go
 
-FROM node:26-bookworm-slim AS dependencies
+FROM node:26-trixie-slim AS dependencies
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ curl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Link the pinned upstream SQLite statically; runtime needs no SQLite system library.
+COPY extra/build-sqlite.mjs ./extra/build-sqlite.mjs
+RUN node extra/build-sqlite.mjs /opt/sqlite
 COPY package*.json ./
-# SQLite prebuilds require a newer glibc; compile against Bookworm instead.
-RUN PYTHON=/usr/bin/python3 npm_config_nodedir=/usr/local npm_config_build_from_source=sqlite3 \
+RUN PYTHON=/usr/bin/python3 npm_config_nodedir=/usr/local npm_config_build_from_source=sqlite3 npm_config_sqlite=/opt/sqlite \
     npm ci --omit=dev --foreground-scripts --no-audit --no-fund
 # Only the native addon is needed at runtime, not the compiler intermediates.
 RUN find node_modules/sqlite3/build -type f ! -path "*/Release/node_sqlite3.node" -delete
-COPY tests/native-modules.test.ts tests/dependency-compatibility.test.ts ./tests/
+COPY tests/native-modules.test.ts tests/dependency-compatibility.test.ts tests/http-compatibility.test.ts ./tests/
 COPY backend ./backend
 COPY common ./common
-RUN npm run test:native && npm run test:compat
+COPY --from=frontend /esbuild-native /tmp/esbuild-native
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+# Run the architecture-independent TS transformer natively when testing under QEMU.
+# The runtime image retains its target-native esbuild binary.
+RUN node -e 'require("node:assert/strict").equal(require("sqlite3").VERSION, "3.54.1")' \
+    && if [ "$BUILDPLATFORM" != "$TARGETPLATFORM" ]; then export ESBUILD_BINARY_PATH=/tmp/esbuild-native; fi \
+    && npm run test:native && npm run test:compat
 
-FROM node:26-bookworm-slim AS release
+FROM node:26-trixie-slim AS release
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg dumb-init \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
     && chmod a+r /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian trixie stable" > /etc/apt/sources.list.d/docker.list \
     && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app

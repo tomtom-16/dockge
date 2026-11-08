@@ -33,9 +33,13 @@ test("native terminal runs a command and reports its output and exit code", { ti
 
 test("native SQLite opens a database and executes a query", { timeout: 15000 }, async () => {
     const database = new sqlite3.Database(":memory:");
+    type SQLiteRow = {
+        answer: number;
+        version: string;
+    };
     try {
-        const row = await new Promise((resolve, reject) => {
-            database.get("SELECT 42 AS answer", (error, result) => {
+        const row = await new Promise<SQLiteRow>((resolve, reject) => {
+            database.get<SQLiteRow>("SELECT 42 AS answer, sqlite_version() AS version", (error, result) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -43,7 +47,10 @@ test("native SQLite opens a database and executes a query", { timeout: 15000 }, 
                 }
             });
         });
-        assert.deepEqual(row, { answer: 42 });
+        assert.deepEqual(row, {
+            answer: 42,
+            version: sqlite3.VERSION,
+        });
     } finally {
         await new Promise<void>((resolve, reject) => {
             database.close(error => {

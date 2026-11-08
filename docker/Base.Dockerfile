@@ -1,4 +1,4 @@
-FROM node:26-bookworm-slim
+FROM node:26-trixie-slim
 RUN apt update && apt install --yes --no-install-recommends \
     curl \
     ca-certificates \

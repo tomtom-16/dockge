@@ -9,6 +9,7 @@ import knex from "knex";
 import Dialect from "knex/lib/dialects/sqlite3/index.js";
 
 import sqlite from "sqlite3";
+import type { Database as SQLiteConnection } from "sqlite3";
 import { sleep } from "../common/util-common";
 
 interface DBConfig {
@@ -91,7 +92,6 @@ export class Database {
         let dbConfig : DBConfig;
         try {
             dbConfig = this.readDBConfig();
-            Database.dbConfig = dbConfig;
         } catch (err) {
             if (err instanceof Error) {
                 log.warn("db", err.message);
@@ -103,7 +103,8 @@ export class Database {
             this.writeDBConfig(dbConfig);
         }
 
-        let config = {};
+        Database.dbConfig = dbConfig;
+        let config;
 
         log.info("db", `Database Type: ${dbConfig.type}`);
 
@@ -115,10 +116,18 @@ export class Database {
                 client: Dialect,
                 connection: {
                     filename: Database.sqlitePath,
-                    acquireConnectionTimeout: acquireConnectionTimeout,
                 },
                 useNullAsDefault: true,
                 pool: {
+                    // PRAGMAs such as foreign_keys and synchronous belong to each connection.
+                    afterCreate: (connection: SQLiteConnection, done: (error: Error | null, connection: SQLiteConnection) => void) => {
+                        connection.exec(`
+                            PRAGMA foreign_keys = ON;
+                            PRAGMA busy_timeout = 5000;
+                            PRAGMA synchronous = FULL;
+                            PRAGMA cache_size = -12000;
+                        `, error => done(error, connection));
+                    },
                     min: 1,
                     max: 1,
                     idleTimeoutMillis: 120 * 1000,
@@ -155,16 +164,13 @@ export class Database {
      @returns {Promise<void>}
      */
     static async initSQLite() {
-        await R.exec("PRAGMA foreign_keys = ON");
-        // Change to WAL
-        await R.exec("PRAGMA journal_mode = WAL");
-        await R.exec("PRAGMA cache_size = -12000");
+        const journalMode = await R.getCell("PRAGMA journal_mode = WAL", [], false);
+        if (journalMode !== "wal") {
+            throw new Error("SQLite WAL mode could not be enabled");
+        }
+        // Effective before tables are created; existing databases need an explicit VACUUM
+        // to change from NONE. Do not rewrite a user's database automatically at startup.
         await R.exec("PRAGMA auto_vacuum = INCREMENTAL");
-
-        // This ensures that an operating system crash or power failure will not corrupt the database.
-        // FULL synchronous is very safe, but it is also slower.
-        // Read more: https://sqlite.org/pragma.html#pragma_synchronous
-        await R.exec("PRAGMA synchronous = NORMAL");
 
         log.debug("db", "SQLite config:");
         log.debug("db", await R.getAll("PRAGMA journal_mode"));

@@ -30,7 +30,7 @@ import { Stack } from "./stack";
 import { Cron } from "croner";
 import gracefulShutdown from "http-graceful-shutdown";
 import User from "./models/user";
-import childProcessAsync from "promisify-child-process";
+import * as childProcessAsync from "promisify-child-process";
 import { AgentManager } from "./agent-manager";
 import { AgentProxySocketHandler } from "./socket-handlers/agent-proxy-socket-handler";
 import { AgentSocketHandler } from "./agent-socket-handler";
@@ -198,7 +198,7 @@ export class DockgeServer {
         }));
 
         // Universal Route Handler, must be at the end of all express routes.
-        this.app.get("*", async (_request, response) => {
+        this.app.get("/{*path}", async (_request, response) => {
             response.send(this.indexHTML);
         });
 
@@ -396,11 +396,11 @@ export class DockgeServer {
             }
 
             // Run every 10 seconds
-            Cron("*/10 * * * * *", {
-                protect: true,  // Enabled over-run protection.
-            }, () => {
-                //log.debug("server", "Cron job running");
-                this.sendStackList(true);
+            new Cron("*/10 * * * * *", {
+                protect: true,  // Wait for the async refresh before starting another.
+                catch: (error) => log.error("server", error),
+            }, async () => {
+                await this.sendStackList(true);
             });
 
             checkVersion.startInterval();

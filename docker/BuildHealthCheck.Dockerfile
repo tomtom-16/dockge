@@ -1,10 +1,7 @@
-############################################
-# Build in Golang
-############################################
-FROM golang:1.21.4-bookworm
+# Build a static healthcheck natively for each target architecture.
+FROM --platform=$BUILDPLATFORM golang:1.27.3-trixie
 WORKDIR /app
-ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 COPY ./extra/healthcheck.go ./extra/healthcheck.go
-
-# Compile healthcheck.go
-RUN go build -x -o ./extra/healthcheck ./extra/healthcheck.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o ./extra/healthcheck ./extra/healthcheck.go

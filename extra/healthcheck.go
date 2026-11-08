@@ -1,12 +1,12 @@
 /*
- * If changed, have to run `npm run build-docker-builder-go`.
+ * If changed, rebuild the Docker image.
  * This script should be run after a period of time (180s), because the server may need some time to prepare.
  */
 package main
 
 import (
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -63,7 +63,7 @@ func main() {
 
 	defer resp.Body.Close()
 
-	_, err = ioutil.ReadAll(resp.Body)
+	_, err = io.Copy(io.Discard, resp.Body)
 
 	if err != nil {
 		log.Fatalln(err)
