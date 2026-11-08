@@ -9,6 +9,7 @@ import { i18n } from "./i18n";
 
 // Dependencies
 import "bootstrap";
+import { createBootstrap } from "bootstrap-vue-next/plugins/createBootstrap";
 import Toast, { POSITION, useToast } from "vue-toastification";
 import "@xterm/xterm/lib/xterm.js";
 
@@ -29,6 +30,7 @@ document.title = document.title + " - " + location.host;
 
 const app = createApp(rootApp());
 
+app.use(createBootstrap());
 app.use(Toast, {
     position: POSITION.BOTTOM_RIGHT,
     showCloseButtonOnHover: true,

@@ -60,7 +60,7 @@
                             <font-awesome-icon v-if="agentItem.name !== ''" icon="pen-to-square" @click="showEditAgentNameDialog[agentItem.name] = !showEditAgentNameDialog[agentItem.Name]" />
 
                             <!-- Edit Dialog -->
-                            <BModal v-model="showEditAgentNameDialog[agentItem.name]" :no-close-on-backdrop="true" :close-on-esc="true" :okTitle="$t('Update Name')" okVariant="info" @ok="updateName(agentItem.url, agentItem.updatedName)">
+                            <BModal v-model="showEditAgentNameDialog[agentItem.name]" no-close-on-backdrop :okTitle="$t('Update Name')" okVariant="info" @ok="updateName(agentItem.url, agentItem.updatedName)">
                                 <label for="Update Name" class="form-label">Current value: {{ $t(agentItem.name) }}</label>
                                 <input id="updatedName" v-model="agentItem.updatedName" type="text" class="form-control" optional>
                             </BModal>

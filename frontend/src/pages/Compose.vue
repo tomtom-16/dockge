@@ -51,7 +51,7 @@
                         <span class="action-label">{{ $t("stopStack") }}</span>
                     </button>
 
-                    <BDropdown v-if="!isEditMode" :class="{ 'stop-dropdown-joined': active }" right text="" variant="normal" :disabled="processing">
+                    <BDropdown v-if="!isEditMode" :class="{ 'stop-dropdown-joined': active }" placement="bottom-end" text="" variant="normal" :disabled="processing" :toggle-attrs="{ 'aria-label': $t('downStack') }">
                         <BDropdownItem @click="downStack">
                             <font-awesome-icon icon="stop" class="me-1" />
                             {{ $t("downStack") }}
