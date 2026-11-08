@@ -2,13 +2,14 @@
     <div class="shadow-box big-padding mb-3 container">
         <div class="row">
             <div class="col-12 col-sm-5">
-                <h4>{{ name }}</h4>
+                <div class="container-heading mb-2">
+                    <h4 class="mb-0">{{ name }}</h4>
+                    <span v-if="!isEditMode" class="badge" :class="bgStyle">{{ status }}</span>
+                </div>
                 <div v-if="imageName" class="image mb-2">
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
                 </div>
                 <div v-if="!isEditMode">
-                    <span class="badge me-1" :class="bgStyle">{{ status }}</span>
-
                     <a v-for="port in (ports ?? envsubstService.ports)" :key="port" :href="parsePort(port).url" target="_blank">
                         <span class="badge me-1 bg-secondary">{{ parsePort(port).display }}</span>
                     </a>
@@ -388,6 +389,21 @@ export default defineComponent({
 
 <style scoped lang="scss">
 @use "../styles/vars" as *;
+
+.container-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    h4 {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .badge {
+        flex-shrink: 0;
+    }
+}
 
 .container {
     .image {

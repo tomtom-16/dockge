@@ -46,17 +46,19 @@
                         <span class="action-label">{{ $t("updateStack") }}</span>
                     </button>
 
-                    <button v-if="!isEditMode && active" class="btn btn-normal stop-stack-button" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
-                        <font-awesome-icon icon="stop" class="me-1" />
-                        <span class="action-label">{{ $t("stopStack") }}</span>
-                    </button>
-
-                    <BDropdown v-if="!isEditMode" :class="{ 'stop-dropdown-joined': active }" placement="bottom-end" text="" variant="normal" :disabled="processing" :toggle-attrs="{ 'aria-label': $t('downStack') }">
-                        <BDropdownItem @click="downStack">
+                    <div v-if="!isEditMode" class="btn-group stop-controls" role="group">
+                        <button v-if="active" class="btn btn-normal stop-stack-button" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
                             <font-awesome-icon icon="stop" class="me-1" />
-                            {{ $t("downStack") }}
-                        </BDropdownItem>
-                    </BDropdown>
+                            <span class="action-label">{{ $t("stopStack") }}</span>
+                        </button>
+
+                        <BDropdown placement="bottom-end" text="" variant="normal" :disabled="processing" :toggle-attrs="{ 'aria-label': $t('downStack') }">
+                            <BDropdownItem @click="downStack">
+                                <font-awesome-icon icon="stop" class="me-1" />
+                                {{ $t("downStack") }}
+                            </BDropdownItem>
+                        </BDropdown>
+                    </div>
 
                     <button v-if="!isEditMode" class="btn btn-danger" :disabled="processing" :aria-label="$t('deleteStack')" :title="$t('deleteStack')" @click="showDeleteDialog = !showDeleteDialog">
                         <font-awesome-icon icon="trash" class="me-1" />
@@ -892,6 +894,31 @@ export default {
     }
 }
 
+.compact-actions > .btn-group > .stop-controls {
+    margin-left: 8px;
+
+    > :deep(.dropdown) {
+        display: inline-flex;
+    }
+
+    > :deep(.stop-stack-button + .dropdown) {
+        margin-left: -1px;
+    }
+
+    > .stop-stack-button {
+        border-radius: $border-radius 0 0 $border-radius !important;
+    }
+
+    > :deep(.dropdown > .btn) {
+        border-radius: $border-radius !important;
+    }
+
+    > :deep(.stop-stack-button + .dropdown > .btn) {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+    }
+}
+
 @media (max-width: 767.98px) {
     // Keep editable text at 16px to avoid Safari zooming when it receives focus.
     .editor-box :deep(.cm-editor),
@@ -928,19 +955,13 @@ export default {
             padding: 8px;
         }
 
-        > .stop-stack-button {
-            border-top-right-radius: 0 !important;
-            border-bottom-right-radius: 0 !important;
-        }
+        > .stop-controls {
+            margin-left: 0;
 
-        > .stop-dropdown-joined {
-            // Cancel the 4px gap and overlap the shared border.
-            margin-left: -5px;
-        }
-
-        > :deep(.stop-dropdown-joined > .btn) {
-            border-top-left-radius: 0 !important;
-            border-bottom-left-radius: 0 !important;
+            > .btn, > :deep(.dropdown > .btn) {
+                min-height: 44px;
+                padding: 8px;
+            }
         }
 
         .action-label {

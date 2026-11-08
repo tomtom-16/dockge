@@ -1,10 +1,7 @@
 <template>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12 col-md-4 col-xl-3">
-                <div>
-                    <router-link to="/compose" class="btn btn-primary mb-3"><font-awesome-icon icon="plus" /> {{ $t("compose") }}</router-link>
-                </div>
+            <div v-if="!$root.isMobile || $route.name === 'DashboardHome'" class="col-12 col-md-4 col-xl-3">
                 <StackList :scrollbar="true" :collapsed="$root.isMobile && !listOpen" @stack-selected="closeStackList">
                     <template v-if="$root.isMobile" #toggle>
                         <button

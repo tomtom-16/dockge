@@ -10,7 +10,10 @@
                     {{ $t("Select") }}
                 </button>
 
-                <slot name="toggle"><div class="placeholder"></div></slot>
+                <slot name="toggle"></slot>
+                <router-link v-show="!collapsed" to="/compose" class="btn btn-primary compose-button" :aria-label="$t('compose')" :title="$t('compose')">
+                    <font-awesome-icon icon="plus" />
+                </router-link>
                 <div v-show="!collapsed" class="search-wrapper">
                     <a v-if="searchText == ''" class="search-icon">
                         <font-awesome-icon icon="search" />
@@ -428,8 +431,13 @@ export default {
 
 .header-top {
     display: flex;
-    justify-content: space-between;
+    gap: 4px;
     align-items: center;
+}
+
+.compose-button {
+    flex-shrink: 0;
+    min-width: 44px;
 }
 
 .collapsed .list-header {
@@ -460,9 +468,15 @@ export default {
 }
 
 .search-wrapper {
+    flex: 1;
     display: flex;
     align-items: center;
     min-width: 0;
+
+    form {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 .search-icon {
@@ -481,7 +495,7 @@ export default {
 }
 
 .search-input {
-    max-width: 15em;
+    width: 100%;
     min-width: 0;
 }
 

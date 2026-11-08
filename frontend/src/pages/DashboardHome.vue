@@ -1,10 +1,6 @@
 <template>
     <transition ref="tableContainer" name="slide-fade" appear>
         <div v-if="$route.name === 'DashboardHome'">
-            <h1 class="mb-3">
-                {{ $t("home") }}
-            </h1>
-
             <div class="row first-row">
                 <!-- Left -->
                 <div class="col-md-7">
@@ -12,16 +8,22 @@
                     <div class="shadow-box big-padding text-center mb-4">
                         <div class="row">
                             <div class="col">
-                                <h3>{{ $t("active") }}</h3>
-                                <span class="num active">{{ activeNum }}</span>
+                                <span class="num active" :aria-label="$t('active')" :title="$t('active')">
+                                    <font-awesome-icon icon="play" class="status-icon" />
+                                    {{ activeNum }}
+                                </span>
                             </div>
                             <div class="col">
-                                <h3>{{ $t("exited") }}</h3>
-                                <span class="num exited">{{ exitedNum }}</span>
+                                <span class="num exited" :aria-label="$t('exited')" :title="$t('exited')">
+                                    <font-awesome-icon icon="stop" class="status-icon" />
+                                    {{ exitedNum }}
+                                </span>
                             </div>
                             <div class="col">
-                                <h3>{{ $t("inactive") }}</h3>
-                                <span class="num inactive">{{ inactiveNum }}</span>
+                                <span class="num inactive" :aria-label="$t('inactive')" :title="$t('inactive')">
+                                    <font-awesome-icon icon="pause" class="status-icon" />
+                                    {{ inactiveNum }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -332,15 +334,21 @@ export default {
     font-size: 30px;
 
     font-weight: bold;
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 
     &.active {
-        color: $primary;
+        color: #198754;
     }
 
     &.exited {
         color: $danger;
     }
+}
+
+.status-icon {
+    font-size: 20px;
 }
 
 .shadow-box {
