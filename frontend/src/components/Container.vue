@@ -1,7 +1,7 @@
 <template>
     <div class="shadow-box big-padding mb-3 container">
-        <div class="row">
-            <div class="col-12 col-sm-5">
+        <div class="container-header">
+            <div class="container-details">
                 <div class="container-heading mb-2">
                     <h4 class="mb-0">{{ name }}</h4>
                     <span v-if="!isEditMode" class="badge" :class="bgStyle">{{ status }}</span>
@@ -15,9 +15,9 @@
                     </a>
                 </div>
             </div>
-            <div class="col-12 col-sm-7">
+            <div class="container-actions">
                 <div class="function">
-                    <div class="btn-group me-2" role="group">
+                    <div class="btn-group" role="group">
                         <router-link v-if="!isEditMode && (status === 'running' || status === 'healthy')" class="btn btn-normal" :to="terminalRouteLink" title="Bash" disabled="">
                             <font-awesome-icon icon="terminal" />
                             <span :class="{ 'visually-hidden': serviceCount > 1 }">Bash</span>
@@ -390,6 +390,22 @@ export default defineComponent({
 <style scoped lang="scss">
 @use "../styles/vars" as *;
 
+.container-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+}
+
+.container-details {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.container-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
 .container-heading {
     display: flex;
     align-items: center;
@@ -423,7 +439,7 @@ export default defineComponent({
         align-items: center;
         justify-content: end;
         .btn-group {
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
     }
 
@@ -434,8 +450,11 @@ export default defineComponent({
 }
 
 @media (max-width: 575.98px) {
+    .container-actions {
+        margin-left: 0;
+    }
+
     .container .function {
-        margin-top: 10px;
         justify-content: start;
         .btn-group {
             gap: 4px;

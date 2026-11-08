@@ -10,7 +10,7 @@
             </h1>
 
             <div v-if="stack.isManagedByDockge" class="mb-3 stack-actions" :class="{ 'compact-actions': !isEditMode, 'edit-actions': isEditMode }">
-                <div class="btn-group me-2" role="group">
+                <div class="stack-action-buttons" :class="{ 'btn-group': isEditMode }" role="group">
                     <button v-if="isEditMode" class="btn btn-primary" :disabled="processing" @click="deployStack">
                         <font-awesome-icon icon="rocket" class="me-1" />
                         {{ $t("deployStack") }}
@@ -26,25 +26,27 @@
                         {{ $t("discardStack") }}
                     </button>
 
-                    <button v-if="!isEditMode" class="btn btn-secondary" :disabled="processing" :aria-label="$t('editStack')" :title="$t('editStack')" @click="enableEditMode">
-                        <font-awesome-icon icon="pen" class="me-1" />
-                        <span class="action-label">{{ $t("editStack") }}</span>
-                    </button>
+                    <div v-if="!isEditMode" class="btn-group primary-controls" role="group">
+                        <button class="btn btn-secondary" :disabled="processing" :aria-label="$t('editStack')" :title="$t('editStack')" @click="enableEditMode">
+                            <font-awesome-icon icon="pen" class="me-1" />
+                            <span class="action-label">{{ $t("editStack") }}</span>
+                        </button>
 
-                    <button v-if="!isEditMode && !active" class="btn btn-primary" :disabled="processing" :aria-label="$t('startStack')" :title="$t('startStack')" @click="startStack">
-                        <font-awesome-icon icon="play" class="me-1" />
-                        <span class="action-label">{{ $t("startStack") }}</span>
-                    </button>
+                        <button v-if="!active" class="btn btn-primary" :disabled="processing" :aria-label="$t('startStack')" :title="$t('startStack')" @click="startStack">
+                            <font-awesome-icon icon="play" class="me-1" />
+                            <span class="action-label">{{ $t("startStack") }}</span>
+                        </button>
 
-                    <button v-if="!isEditMode && active" class="btn btn-normal " :disabled="processing" :aria-label="$t('restartStack')" :title="$t('restartStack')" @click="restartStack">
-                        <font-awesome-icon icon="rotate" class="me-1" />
-                        <span class="action-label">{{ $t("restartStack") }}</span>
-                    </button>
+                        <button v-if="active" class="btn btn-normal " :disabled="processing" :aria-label="$t('restartStack')" :title="$t('restartStack')" @click="restartStack">
+                            <font-awesome-icon icon="rotate" class="me-1" />
+                            <span class="action-label">{{ $t("restartStack") }}</span>
+                        </button>
 
-                    <button v-if="!isEditMode" class="btn btn-normal" :disabled="processing" :aria-label="$t('updateStack')" :title="$t('updateStack')" @click="updateStack">
-                        <font-awesome-icon icon="cloud-arrow-down" class="me-1" />
-                        <span class="action-label">{{ $t("updateStack") }}</span>
-                    </button>
+                        <button class="btn btn-normal" :disabled="processing" :aria-label="$t('updateStack')" :title="$t('updateStack')" @click="updateStack">
+                            <font-awesome-icon icon="cloud-arrow-down" class="me-1" />
+                            <span class="action-label">{{ $t("updateStack") }}</span>
+                        </button>
+                    </div>
 
                     <div v-if="!isEditMode" class="btn-group stop-controls" role="group">
                         <button v-if="active" class="btn btn-normal stop-stack-button" :disabled="processing" :aria-label="$t('stopStack')" :title="$t('stopStack')" @click="stopStack">
@@ -883,10 +885,13 @@ export default {
     min-height: 36px;
 }
 
-.edit-actions > .btn-group {
+.stack-action-buttons {
     display: inline-flex;
-    flex-wrap: nowrap;
     gap: 4px;
+}
+
+.edit-actions > .stack-action-buttons {
+    flex-wrap: nowrap;
 
     > .btn {
         border-radius: 6px !important;
@@ -894,9 +899,7 @@ export default {
     }
 }
 
-.compact-actions > .btn-group > .stop-controls {
-    margin-left: 8px;
-
+.compact-actions > .stack-action-buttons > .stop-controls {
     > :deep(.dropdown) {
         display: inline-flex;
     }
@@ -927,41 +930,47 @@ export default {
         font-size: 16px;
     }
 
-    .stack-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+    .compact-actions > .stack-action-buttons {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        width: 100%;
 
-        > .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-right: 0 !important;
+        > .primary-controls {
+            display: contents;
 
-            > .btn, > :deep(.dropdown > .btn) {
+            > .btn {
                 border-radius: 6px !important;
                 margin-left: 0;
             }
         }
-    }
 
-    .compact-actions > .btn-group {
-        width: 100%;
-        flex-wrap: nowrap;
-
-        > .btn, > :deep(.dropdown > .btn) {
+        > .btn,
+        > .primary-controls > .btn,
+        > .stop-controls > .btn,
+        > .stop-controls > :deep(.dropdown > .btn) {
             min-width: 0;
             min-height: 44px;
             padding: 8px;
         }
 
         > .stop-controls {
-            margin-left: 0;
+            min-width: 0;
 
-            > .btn, > :deep(.dropdown > .btn) {
-                min-height: 44px;
-                padding: 8px;
+            > .stop-stack-button {
+                flex: 1 1 0;
             }
+
+            > :deep(.dropdown) {
+                flex: 1 1 0;
+            }
+
+            > :deep(.stop-stack-button + .dropdown) {
+                flex: 0 0 auto;
+            }
+        }
+
+        > .btn {
+            border-radius: 6px;
         }
 
         .action-label {
@@ -973,7 +982,7 @@ export default {
         }
     }
 
-    .edit-actions > .btn-group {
+    .edit-actions > .stack-action-buttons {
         flex-wrap: nowrap;
 
         > .btn {
