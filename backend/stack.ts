@@ -19,6 +19,18 @@ import { InteractiveTerminal, Terminal } from "./terminal";
 import * as childProcessAsync from "promisify-child-process";
 import { Settings } from "./settings";
 
+interface ComposeLsEntry {
+    Name: string;
+    Status: string;
+    ConfigFiles?: string;
+}
+
+interface DockerPsEntry {
+    Project: string;
+    State: string;
+    Status: string;
+}
+
 export class Stack {
 
     name: string;
@@ -308,6 +320,7 @@ export class Stack {
 
         let composeList = JSON.parse(res.stdout.toString());
 
+        const statuses = await this.resolveComposeStatuses(composeList);
         for (let composeStack of composeList) {
             let stack = stackList.get(composeStack.Name);
 
@@ -321,7 +334,7 @@ export class Stack {
                 stackList.set(composeStack.Name, stack);
             }
 
-            stack._status = this.statusConvert(composeStack.Status);
+            stack._status = statuses.get(composeStack.Name) ?? UNKNOWN;
             stack._configFilePath = composeStack.ConfigFiles;
         }
 
@@ -345,11 +358,57 @@ export class Stack {
 
         let composeList = JSON.parse(res.stdout.toString());
 
-        for (let composeStack of composeList) {
-            statusList.set(composeStack.Name, this.statusConvert(composeStack.Status));
+        return this.resolveComposeStatuses(composeList);
+    }
+
+    /**
+     * Resolve mixed running/exited projects with one additional Docker snapshot.
+     * Exit 0 is a display heuristic, not proof that a container is an init task.
+     * Keep the original status on ambiguous, incomplete or unreadable snapshots.
+     */
+    private static async resolveComposeStatuses(composeList: ComposeLsEntry[]) : Promise<Map<string, number>> {
+        const statuses = new Map(composeList.map(entry => [ entry.Name, this.statusConvert(entry.Status) ]));
+        const candidates = composeList.filter(entry => statuses.get(entry.Name) === EXITED &&
+            /^(?:exited\([1-9]\d*\), running\([1-9]\d*\)|running\([1-9]\d*\), exited\([1-9]\d*\))$/.test(entry.Status));
+        if (candidates.length === 0) {
+            return statuses;
         }
 
-        return statusList;
+        try {
+            // docker ps has no numeric ExitCode field. Require the explicit Docker
+            // rendering of exit 0; missing or unfamiliar text must not mean success.
+            const res = await childProcessAsync.spawn("docker", [
+                "ps", "--all", "--filter", "label=com.docker.compose.project", "--format",
+                "{\"Project\":{{json (.Label \"com.docker.compose.project\")}},\"State\":{{json .State}},\"Status\":{{json .Status}}}",
+            ], { encoding: "utf-8" });
+            const output = res.stdout?.toString().trim();
+            if (!output) {
+                return statuses;
+            }
+            const containers: DockerPsEntry[] = output.split("\n").map(line => JSON.parse(line));
+            // Do not silently discard malformed rows: that could hide a failed service.
+            if (containers.some(row => !row || typeof row.Project !== "string" ||
+                typeof row.State !== "string" || typeof row.Status !== "string")) {
+                return statuses;
+            }
+            for (const entry of candidates) {
+                const project = containers.filter(row => row.Project === entry.Name);
+                const running = project.filter(row => row.State === "running").length;
+                const exited = project.filter(row => row.State === "exited").length;
+                const expectedRunning = Number(entry.Status.match(/running\((\d+)\)/)?.[1]);
+                const expectedExited = Number(entry.Status.match(/exited\((\d+)\)/)?.[1]);
+                // Match counts too, so disappearing containers or state transitions
+                // between compose ls and docker ps cannot produce a false success.
+                if (running === expectedRunning && exited === expectedExited &&
+                    project.length === running + exited && project.every(row =>
+                    row.State === "running" || (row.State === "exited" && /^Exited \(0\)(?: |$)/.test(row.Status)))) {
+                    statuses.set(entry.Name, RUNNING);
+                }
+            }
+        } catch (e) {
+            log.warn("resolveComposeStatuses", `Unable to verify clean exits: ${e}`);
+        }
+        return statuses;
     }
 
     /**

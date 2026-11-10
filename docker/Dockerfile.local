@@ -6,7 +6,7 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 RUN node -e 'require("node:fs").copyFileSync(require.resolve("@esbuild/" + process.platform + "-" + process.arch + "/bin/esbuild"), "/esbuild-native")'
 COPY . .
-RUN npm run lint && npm run check-ts && npm run test:maintenance && npm run build:frontend
+RUN npm run lint && npm run check-ts && npm run test:maintenance && npm run test:stack-status && npm run build:frontend
 
 FROM --platform=$BUILDPLATFORM golang:1.27.3-trixie AS healthcheck
 WORKDIR /app

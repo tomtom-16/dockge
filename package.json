@@ -27,6 +27,7 @@
         "reset-password": "tsx ./extra/reset-password.ts",
         "backup:db": "tsx ./extra/backup-database.ts",
         "test:maintenance": "node --import tsx --test tests/docker-maintenance.test.ts",
+        "test:stack-status": "node --import tsx --test tests/stack-status.test.ts",
         "build:local": "docker buildx build --platform linux/amd64 -f docker/Dockerfile.local -t ghcr.io/tomtom-16/dockge:mobile-v1 --load .",
         "publish:local": "docker push --platform linux/amd64 ghcr.io/tomtom-16/dockge:mobile-v1",
         "test:native": "node --import tsx --test tests/native-modules.test.ts",

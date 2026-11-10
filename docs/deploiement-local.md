@@ -109,3 +109,51 @@ docker compose ps
 
 Cette modification n'ajoute aucune migration de base. La sauvegarde des données
 reste disponible si une restauration est nécessaire.
+
+## Correctif des statuts : construire et déployer sans publication
+
+La [règle de statut et ses limites](stack-status.md) sont documentées séparément.
+Les commandes suivantes sont à exécuter manuellement. Elles utilisent une image
+locale distincte, sans publier sur GHCR.
+
+Sur le Mac, dans le dépôt :
+
+```bash
+docker buildx build --platform linux/amd64 -f docker/Dockerfile.local -t dockge:stack-status --load .
+docker save dockge:stack-status | gzip > /tmp/dockge-stack-status.tar.gz
+scp /tmp/dockge-stack-status.tar.gz root@192.168.1.57:/tmp/
+ssh root@192.168.1.57
+```
+
+Sur Proxmox :
+
+```bash
+pct push 100 /tmp/dockge-stack-status.tar.gz /tmp/dockge-stack-status.tar.gz
+pct enter 100
+```
+
+Dans le conteneur 100 :
+
+```bash
+cd /opt/dockge
+docker load -i /tmp/dockge-stack-status.tar.gz
+# Utiliser de nouveaux noms si ces sauvegardes existent déjà.
+cp -a compose.yaml compose.yaml.before-stack-status
+docker compose stop dockge
+tar -czf dockge-data-before-stack-status.tar.gz data
+cat > compose.stack-status.yaml <<'YAML'
+services:
+  dockge:
+    image: dockge:stack-status
+    pull_policy: never
+YAML
+docker compose -f compose.yaml -f compose.stack-status.yaml config --quiet
+docker compose -f compose.yaml -f compose.stack-status.yaml up -d --no-deps --pull never dockge
+docker compose -f compose.yaml -f compose.stack-status.yaml ps
+docker compose -f compose.yaml -f compose.stack-status.yaml logs --tail=80 dockge
+```
+
+Conserver les deux options `-f` pour les futures commandes sur cette installation.
+Pour revenir à la référence d'image précédente, lancer `docker compose -f
+compose.yaml up -d --no-deps --pull never dockge` sans le fichier de surcharge.
+Les agents distants doivent recevoir le correctif pour calculer leurs statuts.
