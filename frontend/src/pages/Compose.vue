@@ -81,6 +81,7 @@
                 <Terminal
                     v-show="showProgressTerminal"
                     ref="progressTerminal"
+                    no-wrap
                     class="mb-3 terminal"
                     :name="terminalName"
                     :endpoint="endpoint"
@@ -958,6 +959,11 @@ export default {
 
             > .stop-stack-button {
                 flex: 1 1 0;
+                border-radius: 6px 0 0 6px !important;
+            }
+
+            > :deep(.dropdown > .btn) {
+                border-radius: 6px !important;
             }
 
             > :deep(.dropdown) {
