@@ -3,19 +3,46 @@ import { DockgeServer } from "../dockge-server";
 import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationError } from "../util-server";
 import { Stack } from "../stack";
 import { AgentSocket } from "../../common/agent-socket";
-import { pruneImages } from "../docker-maintenance";
+import { CleanupImage, listImagesForCleanup, pruneImages } from "../docker-maintenance";
 
 export class DockerSocketHandler extends AgentSocketHandler {
     create(socket : DockgeSocket, server : DockgeServer, agentSocket : AgentSocket) {
         // Do not call super.create()
 
+        let cleanupPreview: {
+            all: boolean;
+            images: CleanupImage[];
+        } | null = null;
+        agentSocket.on("previewImageCleanup", async (all: unknown, callback) => {
+            try {
+                checkLogin(socket);
+                cleanupPreview = null;
+                const images = await listImagesForCleanup(all);
+                cleanupPreview = {
+                    all: all as boolean,
+                    images,
+                };
+                callbackResult({
+                    ok: true,
+                    images,
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
         agentSocket.on("pruneImages", async (all: unknown, callback) => {
             try {
                 checkLogin(socket);
-                const output = await pruneImages(all);
+                const preview = cleanupPreview;
+                cleanupPreview = null;
+                if (!preview || preview.all !== all) {
+                    throw new Error("Please preview images before cleanup.");
+                }
+                const result = await pruneImages(all, preview.images);
                 callbackResult({
                     ok: true,
-                    output,
+                    ...result,
                 }, callback);
             } catch (e) {
                 callbackError(e, callback);

@@ -1,4 +1,5 @@
 {
+    "cancel": "Annuler",
     "languageName": "Français",
     "Create your admin account": "Créez votre compte administrateur",
     "authIncorrectCreds": "identifiant ou mot de passe incorrect.",
@@ -132,12 +133,16 @@
     "stacks": "Stacks",
     "viewLogs": "Logs",
     "imageCleanup": "Nettoyer les images",
-    "imageCleanupDescription": "Supprime les images sans tag inutilisées sur l’hôte Docker sélectionné.",
+    "imageCleanupAction": "Nettoyer",
+    "imageCleanupLoading": "Chargement des images…",
+    "imageCleanupPreview": "Les images suivantes seront supprimées :",
+    "imageCleanupDeleted": "Les images suivantes ont été supprimées :",
+    "imageCleanupNoneDeleted": "Aucune image supprimée.",
+    "imageCleanupEmpty": "Aucune image à supprimer.",
+    "imageCleanupPreviewError": "Impossible de charger les images à supprimer.",
+    "imageCleanupReclaimed": "Espace libéré : {size}",
     "imageCleanupAll": "Supprimer aussi les images avec un tag sans conteneur associé",
     "imageCleanupAllWarning": "Les images avec un tag inutilisées seront aussi supprimées. Les images conservées pour un futur déploiement ou un retour arrière devront éventuellement être téléchargées à nouveau.",
     "imageCleanupRunning": "Nettoyage des images en cours…",
-    "imageCleanupConfirm": "Nettoyer les images sur {host} ? Cela concerne toutes les stacks de cet hôte.",
-    "imageCleanupPreserves": "Les images associées à des conteneurs démarrés ou arrêtés sont conservées. Les conteneurs, volumes et réseaux ne sont pas supprimés.",
-    "imageCleanupDone": "Nettoyage des images terminé.",
     "imageCleanupNoResponse": "Aucune réponse de l’hôte. Le nettoyage peut être encore en cours. Vérifie la connexion et que cet agent dispose de la fonction de nettoyage."
 }

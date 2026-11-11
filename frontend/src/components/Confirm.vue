@@ -12,7 +12,7 @@
                     <slot />
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn" :class="btnStyle" data-bs-dismiss="modal" @click="yes">
+                    <button type="button" class="btn" :class="btnStyle" :disabled="yesDisabled" data-bs-dismiss="modal" @click="yes">
                         {{ yesText }}
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="no">
@@ -29,6 +29,11 @@ import { Modal } from "bootstrap";
 
 export default {
     props: {
+        /** Disable confirmation while the dialog has no actionable content. */
+        yesDisabled: {
+            type: Boolean,
+            default: false,
+        },
         /** Style of button */
         btnStyle: {
             type: String,
