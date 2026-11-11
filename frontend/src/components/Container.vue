@@ -68,31 +68,12 @@
                 {{ $t("deleteContainer") }}
             </button>
         </div>
-        <div v-else-if="statsInstances.length > 0" class="mt-2">
-            <div class="d-flex flex-wrap align-items-center gap-3">
-                <template v-if="!expandedStats">
-                    <div class="stats">
-                        {{ $t('CPU') }}: {{ statsInstances[0].CPUPerc }}
-                    </div>
-                    <div class="stats">
-                        {{ $t('memoryAbbreviated') }}: {{ statsInstances[0].MemUsage }}
-                    </div>
-                </template>
-                <div class="d-flex flex-grow-1 justify-content-end">
-                    <button class="btn btn-sm btn-normal" @click="expandedStats = !expandedStats">
-                        <font-awesome-icon :icon="expandedStats ? 'chevron-up' : 'chevron-down'" />
-                    </button>
-                </div>
-            </div>
-            <transition name="slide-fade" appear>
-                <div v-if="expandedStats" class="d-flex flex-column gap-3 mt-2">
-                    <DockerStat
-                        v-for="stat in statsInstances"
-                        :key="stat.Name"
-                        :stat="stat"
-                    />
-                </div>
-            </transition>
+        <div v-else class="d-flex flex-column gap-3 mt-2">
+            <DockerStat
+                v-for="stat in statsInstances"
+                :key="stat.Name"
+                :stat="stat"
+            />
         </div>
 
         <transition name="slide-fade" appear>
@@ -234,7 +215,6 @@ export default defineComponent({
     data() {
         return {
             showConfig: false,
-            expandedStats: false,
         };
     },
     computed: {
@@ -340,13 +320,13 @@ export default defineComponent({
             }
         },
         statsInstances() {
-            if (!this.serviceStatus) {
-                return [];
-            }
+            const instances = this.serviceStatus?.length ? this.serviceStatus : [{ name: this.name }];
 
-            return this.serviceStatus
-                .map(s => this.dockerStats[s.name])
-                .filter(s => !!s)
+            return instances
+                .map(s => ({
+                    ...this.dockerStats?.[s.name],
+                    Name: s.name
+                }))
                 .sort((a, b) => a.Name.localeCompare(b.Name));
         },
         status() {
@@ -441,11 +421,6 @@ export default defineComponent({
         .btn-group {
             flex-wrap: nowrap;
         }
-    }
-
-    .stats {
-        font-size: 0.8rem;
-        color: #6c757d;
     }
 }
 

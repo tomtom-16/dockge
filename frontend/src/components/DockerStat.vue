@@ -1,39 +1,36 @@
 <template>
-    <div class="stats-container">
-        <div class="stats-title">
-            {{ stat.Name }}
-        </div>
-        <div class="d-flex justify-content-between stats gap-2 mt-1">
+    <div>
+        <div class="stats">
             <div class="stat">
                 <div class="stat-label">
                     {{ $t('CPU') }}
                 </div>
-                <div>
-                    {{ stat.CPUPerc }}
+                <div :title="stat.CPUPerc">
+                    {{ stat.CPUPerc || "—" }}
                 </div>
             </div>
             <div class="stat">
                 <div class="stat-label">
                     {{ $t('memory') }}
                 </div>
-                <div>
-                    {{ stat.MemUsage }} ({{ stat.MemPerc }})
+                <div :title="memoryUsage">
+                    {{ memoryUsage }}
                 </div>
             </div>
             <div class="stat">
                 <div class="stat-label">
                     {{ $t('networkIO') }}
                 </div>
-                <div>
-                    {{ stat.NetIO }}
+                <div :title="stat.NetIO">
+                    {{ stat.NetIO || "—" }}
                 </div>
             </div>
             <div class="stat">
                 <div class="stat-label">
                     {{ $t('blockIO') }}
                 </div>
-                <div>
-                    {{ stat.BlockIO }}
+                <div :title="stat.BlockIO">
+                    {{ stat.BlockIO || "—" }}
                 </div>
             </div>
         </div>
@@ -48,47 +45,43 @@ export default {
             required: true
         }
     },
+    computed: {
+        memoryUsage() {
+            if (!this.stat.MemUsage) {
+                return "—";
+            }
+            return this.stat.MemPerc ? `${this.stat.MemUsage} (${this.stat.MemPerc})` : this.stat.MemUsage;
+        }
+    }
 };
 </script>
 
 <style lang="scss" scoped>
-.stats-container {
-    container-type: inline-size;
-
-    .stats {
-        container-type: inline-size;
-
-        .stat {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        @container (width < 420px) {
-            flex-direction: column;
-
-            .stat {
-                flex-direction: row;
-            }
-
-            .stat-label::after {
-                content: ':'
-            }
-        }
-    }
-}
-
 .stats {
+    display: grid;
+    grid-template-columns: minmax(6ch, max-content) repeat(3, minmax(0, max-content));
+    justify-content: space-between;
+    column-gap: 12px;
     font-size: 0.8rem;
     color: #6c757d;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+
+    > div {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 .stat-label {
     font-weight: bold;
 }
 
-.stats-title {
-    font-size: 0.9rem;
-    color: var(--bs-heading-color);
-}
 </style>
