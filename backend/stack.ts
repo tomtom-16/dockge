@@ -122,11 +122,16 @@ export class Stack {
         return this._status;
     }
 
-    validate() {
+    /** Validate stack names before resolving paths within the stacks directory. */
+    static validateName(name : string) {
         // Check name, allows [a-z][0-9] _ - only
-        if (!this.name.match(/^[a-z0-9_-]+$/)) {
+        if (!name.match(/^[a-z0-9_-]+$/)) {
             throw new ValidationError("Stack name can only contain [a-z][0-9] _ - only");
         }
+    }
+
+    validate() {
+        Stack.validateName(this.name);
 
         // Check YAML format
         yaml.parse(this.composeYAML);
@@ -207,11 +212,21 @@ export class Stack {
 
         // Write or overwrite the compose.yaml
         fs.writeFileSync(path.join(dir, this._composeFileName), this.composeYAML);
+
+        // Preserve an existing empty .env, but do not create one unnecessarily.
+        const envPath = path.join(dir, ".env");
+        if (await fileExists(envPath) || this.composeENV.trim() !== "") {
+            await fsAsync.writeFile(envPath, this.composeENV);
+        }
+
         if (process.env.PUID && process.env.PGID) {
             const uid = Number(process.env.PUID);
             const gid = Number(process.env.PGID);
             fs.lchownSync(dir, uid, gid);
             fs.chownSync(path.join(dir, this._composeFileName), uid, gid);
+            if (await fileExists(envPath)) {
+                fs.chownSync(envPath, uid, gid);
+            }
         }
     }
 
@@ -431,6 +446,7 @@ export class Stack {
     }
 
     static async getStack(server: DockgeServer, stackName: string, skipFSOperations = false) : Promise<Stack> {
+        this.validateName(stackName);
         let dir = path.join(server.stacksDir, stackName);
 
         if (!skipFSOperations) {

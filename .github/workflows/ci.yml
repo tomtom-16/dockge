@@ -52,6 +52,9 @@ jobs:
       - name: Check native modules
         run: npm run test:native && npm run test:compat
 
+      - name: Check stack files and terminal environment
+        run: npm run test:stack-files && npm run test:terminal-env
+
       - name: Check SQLite on Debian Trixie
         if: matrix.os == 'ubuntu-latest'
         run: docker build --target dependencies -f docker/Dockerfile.local .

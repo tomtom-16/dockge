@@ -113,10 +113,15 @@ export class Terminal {
 
         try {
             this._ptyProcess = pty.spawn(this.file, this.args, {
-                name: this.name,
+                // node-pty uses this option as TERM, not as the Dockge terminal ID.
+                name: "xterm-256color",
                 cwd: this.cwd,
                 cols: this.cols,
                 rows: this.rows,
+                env: {
+                    ...process.env,
+                    TERM: "xterm-256color",
+                },
             });
 
             // On Data
