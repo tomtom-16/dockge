@@ -60,7 +60,7 @@
                                 </router-link>
                             </li>-->
 
-                            <li>
+                            <li v-if="$root.agentCount > 1">
                                 <button class="dropdown-item" @click="scanFolder">
                                     <font-awesome-icon icon="arrows-rotate" /> {{ $t("scanFolder") }}
                                 </button>
