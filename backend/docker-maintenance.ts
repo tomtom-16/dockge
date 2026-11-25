@@ -1,7 +1,4 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
+import { docker, inspectDocker } from "./docker-cli";
 let pruning = false;
 
 export interface CleanupImage {
@@ -15,37 +12,15 @@ interface DockerImage {
     RepoTags?: string[];
 }
 
-/** Run Docker without a shell, with bounded execution and output. */
-async function docker(args: string[]): Promise<string> {
-    const { stdout } = await execFileAsync("docker", args, {
-        timeout: 15 * 60 * 1000,
-        maxBuffer: 8 * 1024 * 1024,
-        env: {
-            ...process.env,
-            LC_ALL: "C",
-        },
-    });
-    return stdout;
-}
-
-/** Inspect in batches to keep command arguments bounded on large hosts. */
-async function inspect<T>(kind: string, ids: string[]): Promise<T[]> {
-    const result: T[] = [];
-    for (let index = 0; index < ids.length; index += 100) {
-        result.push(...JSON.parse(await docker([ kind, "inspect", ...ids.slice(index, index + 100) ])));
-    }
-    return result;
-}
-
 /** List unused images, preserving images used by stopped containers and their parents. */
 export async function listImagesForCleanup(all: unknown): Promise<CleanupImage[]> {
     if (typeof all !== "boolean") {
         throw new Error("Invalid image cleanup mode");
     }
     const ids = [ ...new Set((await docker([ "image", "ls", "--all", "--quiet", "--no-trunc" ])).split(/\s+/).filter(Boolean)) ];
-    const images = await inspect<DockerImage>("image", ids);
+    const images = await inspectDocker<DockerImage>("image", ids);
     const containerIds = (await docker([ "container", "ls", "--all", "--quiet" ])).split(/\s+/).filter(Boolean);
-    const containers = await inspect<{ Image: string }>("container", containerIds);
+    const containers = await inspectDocker<{ Image: string }>("container", containerIds);
     const protectedIds = new Set(containers.map(container => container.Image));
     const byId = new Map(images.map(image => [ image.Id, image ]));
     if (!all) {
@@ -67,6 +42,39 @@ export async function listImagesForCleanup(all: unknown): Promise<CleanupImage[]
             tags: (image.RepoTags || []).filter(tag => tag !== "<none>:<none>").sort(),
         }))
         .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Remove only the image IDs replaced by a successful stack update. */
+export async function removeReplacedImages(ids: Set<string>) {
+    const result = { removed: 0,
+        retained: ids.size };
+    if (!ids.size) {
+        return result;
+    }
+
+    const options = { signal: AbortSignal.timeout(15000) };
+    const containerIds = (await docker([ "container", "ls", "--all", "--quiet" ], options)).trim().split(/\s+/).filter(Boolean);
+    const containers = await inspectDocker<{ Image: string }>("container", containerIds, options);
+    const used = new Set(containers.map(container => container.Image));
+    for (const id of ids) {
+        if (used.has(id)) {
+            continue;
+        }
+        try {
+            const [ image ] = await inspectDocker<DockerImage>("image", [ id ], options);
+            if (image?.Id !== id || image.RepoTags?.some(tag => tag !== "<none>:<none>")) {
+                continue;
+            }
+            const output = await docker([ "image", "rm", "--no-prune", id ], options);
+            if (output.split(/\r?\n/).some(line => line.trim() === `Deleted: ${id}`)) {
+                result.removed++;
+                result.retained--;
+            }
+        } catch {
+            // Docker can reject removal if the image disappeared or gained a reference.
+        }
+    }
+    return result;
 }
 
 /** Prune images on this Docker host, allowing only one operation at a time. */

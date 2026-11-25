@@ -14,6 +14,15 @@
                 <router-link v-show="!collapsed" to="/compose" class="btn btn-primary compose-button" :aria-label="$t('compose')" :title="$t('compose')">
                     <font-awesome-icon icon="plus" />
                 </router-link>
+                <button
+                    v-show="!collapsed" class="btn btn-normal check-updates-button" type="button"
+                    :aria-label="$t(checkingUpdates ? 'checkingStackUpdates' : 'checkStackUpdates')"
+                    :title="$t(checkingUpdates ? 'checkingStackUpdates' : 'checkStackUpdates')"
+                    :aria-busy="checkingUpdates"
+                    :disabled="checkingUpdates || activeStackEndpoints.size === 0" @click="checkStackUpdates"
+                >
+                    <font-awesome-icon :icon="checkingUpdates ? 'spinner' : 'arrows-rotate'" :spin="checkingUpdates" aria-hidden="true" />
+                </button>
                 <div v-show="!collapsed" class="search-wrapper">
                     <a v-if="searchText == ''" class="search-icon">
                         <font-awesome-icon icon="search" />
@@ -70,6 +79,7 @@
                     v-for="(item, index) in agent.stacks"
                     v-show="$root.agentCount === 1 || !closedAgents.get(agent.endpoint)" :key="index" :stack="item" :isSelectMode="selectMode"
                     :isSelected="isSelected" :select="select" :deselect="deselect"
+                    :update-check="stackUpdateCheck(item)"
                     @selected="$emit('stack-selected')"
                 />
             </div>
@@ -116,9 +126,24 @@ export default {
                 tags: null,
             },
             closedAgents: new Map(),
+            checkingUpdates: false,
         };
     },
     computed: {
+        activeStackEndpoints() {
+            const endpoints = new Map();
+            for (const stack of Object.values(this.$root.completeStackList)) {
+                const endpoint = stack.endpoint || "";
+                if (stack.status !== RUNNING || !stack.isManagedByDockge ||
+                    (endpoint && this.$root.agentStatusList[endpoint] !== "online")) {
+                    continue;
+                }
+                const names = endpoints.get(endpoint) ?? [];
+                names.push(stack.name);
+                endpoints.set(endpoint, names);
+            }
+            return endpoints;
+        },
         /**
          * Improve the sticky appearance of the list by increasing its
          * height as user scrolls down.
@@ -310,6 +335,40 @@ export default {
         window.removeEventListener("scroll", this.onScroll);
     },
     methods: {
+        stackUpdateCheck(stack) {
+            const endpoint = stack.endpoint || "";
+            if (stack.status !== RUNNING || (endpoint && this.$root.agentStatusList[endpoint] !== "online")) {
+                return null;
+            }
+            const result = this.$root.stackUpdateChecks.get(this.$root.stackUpdateCheckKey(endpoint, stack.name));
+            return typeof result === "object" ? result : null;
+        },
+        async checkStackUpdates() {
+            const endpoints = this.activeStackEndpoints;
+            const pending = Symbol();
+            const checks = this.$root.stackUpdateChecks;
+            this.checkingUpdates = true;
+            checks.clear();
+            try {
+                await Promise.all(Array.from(endpoints, ([ endpoint, names ]) => {
+                    const keys = names.map(name => this.$root.stackUpdateCheckKey(endpoint, name));
+                    keys.forEach(key => checks.set(key, pending));
+                    return new Promise(resolve => {
+                        this.$root.getSocket().timeout(70000).emit("agent", endpoint, "checkStackUpdates", (error, response) => {
+                            const results = new Map((!error && response?.ok ? response.stacks : []).map(stack => [ stack.name, stack ]));
+                            names.forEach((name, index) => {
+                                if (checks.get(keys[index]) === pending) {
+                                    checks.set(keys[index], results.get(name) ?? { incomplete: true });
+                                }
+                            });
+                            resolve();
+                        });
+                    });
+                }));
+            } finally {
+                this.checkingUpdates = false;
+            }
+        },
         /**
          * Handle user scroll
          * @returns {void}
@@ -435,9 +494,11 @@ export default {
     align-items: center;
 }
 
-.compose-button {
+.compose-button,
+.check-updates-button {
     flex-shrink: 0;
     min-width: 44px;
+    padding-inline: 0;
 }
 
 .collapsed .list-header {
@@ -480,7 +541,8 @@ export default {
 }
 
 .search-icon {
-    padding: 10px;
+    flex-shrink: 0;
+    padding: 0 6px;
     color: #c0c0c0;
 
     // Clear filter button (X)
@@ -497,6 +559,7 @@ export default {
 .search-input {
     width: 100%;
     min-width: 0;
+    padding-inline: 6px;
 }
 
 .stack-item {

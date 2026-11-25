@@ -217,6 +217,17 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
+        agentSocket.on("checkStackUpdates", async (callback) => {
+            try {
+                checkLogin(socket);
+                const stacks = await Stack.checkForUpdates(server);
+                callbackResult({ ok: true,
+                    stacks }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
         // updateStack
         agentSocket.on("updateStack", async (stackName : unknown, callback) => {
             try {
@@ -227,11 +238,12 @@ export class DockerSocketHandler extends AgentSocketHandler {
                 }
 
                 const stack = await Stack.getStack(server, stackName);
-                await stack.update(socket);
+                const cleanup = await stack.update(socket);
                 callbackResult({
                     ok: true,
                     msg: "Updated",
                     msgi18n: true,
+                    cleanup,
                 }, callback);
                 server.sendStackList();
             } catch (e) {

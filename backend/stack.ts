@@ -18,6 +18,9 @@ import {
 import { InteractiveTerminal, Terminal } from "./terminal";
 import * as childProcessAsync from "promisify-child-process";
 import { Settings } from "./settings";
+import { checkStackImages, registryManifestReader, replacedImageIds, stackContainers } from "./stack-images";
+import { removeReplacedImages } from "./docker-maintenance";
+import type { StackUpdateCheck } from "../common/stack-updates";
 
 interface ComposeLsEntry {
     Name: string;
@@ -44,6 +47,8 @@ export class Stack {
     protected combinedTerminal? : Terminal;
 
     protected static managedStackList: Map<string, Stack> = new Map();
+    private static updatesInProgress = new Set<string>();
+    private static updateChecks = new WeakMap<DockgeServer, Promise<StackUpdateCheck[]>>();
 
     constructor(server : DockgeServer, name : string, composeYAML? : string, composeENV? : string, skipFSOperations = false) {
         this.name = name;
@@ -286,7 +291,7 @@ export class Stack {
         return false;
     }
 
-    static async getStackList(server : DockgeServer, useCacheForManaged = false) : Promise<Map<string, Stack>> {
+    static async getStackList(server : DockgeServer, useCacheForManaged = false, signal?: AbortSignal) : Promise<Map<string, Stack>> {
         let stacksDir = server.stacksDir;
         let stackList : Map<string, Stack>;
 
@@ -327,6 +332,7 @@ export class Stack {
         // Get status from docker compose ls
         let res = await childProcessAsync.spawn("docker", [ "compose", "ls", "--all", "--format", "json" ], {
             encoding: "utf-8",
+            signal,
         });
 
         if (!res.stdout) {
@@ -335,7 +341,7 @@ export class Stack {
 
         let composeList = JSON.parse(res.stdout.toString());
 
-        const statuses = await this.resolveComposeStatuses(composeList);
+        const statuses = await this.resolveComposeStatuses(composeList, signal);
         for (let composeStack of composeList) {
             let stack = stackList.get(composeStack.Name);
 
@@ -381,7 +387,7 @@ export class Stack {
      * Exit 0 is a display heuristic, not proof that a container is an init task.
      * Keep the original status on ambiguous, incomplete or unreadable snapshots.
      */
-    private static async resolveComposeStatuses(composeList: ComposeLsEntry[]) : Promise<Map<string, number>> {
+    private static async resolveComposeStatuses(composeList: ComposeLsEntry[], signal?: AbortSignal) : Promise<Map<string, number>> {
         const statuses = new Map(composeList.map(entry => [ entry.Name, this.statusConvert(entry.Status) ]));
         const candidates = composeList.filter(entry => statuses.get(entry.Name) === EXITED &&
             /^(?:exited\([1-9]\d*\), running\([1-9]\d*\)|running\([1-9]\d*\), exited\([1-9]\d*\))$/.test(entry.Status));
@@ -395,7 +401,8 @@ export class Stack {
             const res = await childProcessAsync.spawn("docker", [
                 "ps", "--all", "--filter", "label=com.docker.compose.project", "--format",
                 "{\"Project\":{{json (.Label \"com.docker.compose.project\")}},\"State\":{{json .State}},\"Status\":{{json .Status}}}",
-            ], { encoding: "utf-8" });
+            ], { encoding: "utf-8",
+                signal });
             const output = res.stdout?.toString().trim();
             if (!output) {
                 return statuses;
@@ -528,7 +535,50 @@ export class Stack {
         return exitCode;
     }
 
+    static checkForUpdates(server: DockgeServer): Promise<StackUpdateCheck[]> {
+        const current = this.updateChecks.get(server);
+        if (current) {
+            return current;
+        }
+        const check = this.scanForUpdates(server).finally(() => this.updateChecks.delete(server));
+        this.updateChecks.set(server, check);
+        return check;
+    }
+
+    private static async scanForUpdates(server: DockgeServer): Promise<StackUpdateCheck[]> {
+        const signal = AbortSignal.timeout(55000);
+        const read = registryManifestReader(signal);
+        const stacks = [ ...(await this.getStackList(server, false, signal)).values() ].filter(stack => stack.status === RUNNING && stack.isManagedByDockge);
+        const results: StackUpdateCheck[] = [];
+        await Promise.all(Array.from({ length: Math.min(4, stacks.length) }, async () => {
+            for (let stack = stacks.pop(); stack; stack = stacks.pop()) {
+                if (signal.aborted || this.updatesInProgress.has(stack.path)) {
+                    results.push({ name: stack.name,
+                        available: [],
+                        unverified: [],
+                        incomplete: true });
+                } else {
+                    results.push(await checkStackImages(stack, read, signal));
+                }
+            }
+        }));
+        return results;
+    }
+
     async update(socket: DockgeSocket) {
+        if (Stack.updatesInProgress.has(this.path)) {
+            throw new ValidationError("Stack update already running");
+        }
+        Stack.updatesInProgress.add(this.path);
+        try {
+            return await this.updateAndCleanImages(socket);
+        } finally {
+            Stack.updatesInProgress.delete(this.path);
+        }
+    }
+
+    private async updateAndCleanImages(socket: DockgeSocket) {
+        const before = await stackContainers(this).catch(() => null);
         const terminalName = getComposeTerminalName(socket.endpoint, this.name);
         let exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", this.getComposeOptions("pull"), this.path);
         if (exitCode !== 0) {
@@ -539,14 +589,22 @@ export class Stack {
         await this.updateStatus();
         log.debug("update", "Status: " + this.status);
         if (this.status !== RUNNING) {
-            return exitCode;
+            return undefined;
         }
 
         exitCode = await Terminal.exec(this.server, socket, terminalName, "docker", this.getComposeOptions("up", "-d", "--remove-orphans"), this.path);
         if (exitCode !== 0) {
             throw new Error("Failed to restart, please check the terminal output for more information.");
         }
-        return exitCode;
+        if (before) {
+            try {
+                const after = await stackContainers(this);
+                return await removeReplacedImages(replacedImageIds(before, after));
+            } catch {
+                log.warn("update", `Could not clean up replaced images for ${this.name}`);
+            }
+        }
+        return { incomplete: true };
     }
 
     async joinCombinedTerminal(socket: DockgeSocket) {

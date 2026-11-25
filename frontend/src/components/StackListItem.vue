@@ -1,9 +1,13 @@
 <template>
     <router-link :to="url" :class="{ 'dim' : !stack.isManagedByDockge }" class="item" @click="$emit('selected')">
         <Uptime :stack="stack" :fixed-width="true" class="me-2" />
-        <div class="title">
-            <span>{{ stackName }}</span>
-        </div>
+        <span class="title">{{ stackName }}</span>
+        <span v-if="updateBadges.length" class="update-badges">
+            <span v-for="badge in updateBadges" :key="badge.icon" class="update-badge" :class="badge.color" :title="badge.label">
+                <font-awesome-icon :icon="badge.icon" aria-hidden="true" />
+                <span class="visually-hidden">{{ badge.label }}</span>
+            </span>
+        </span>
     </router-link>
 </template>
 
@@ -17,6 +21,10 @@ export default {
     props: {
         /** Stack this represents */
         stack: {
+            type: Object,
+            default: null,
+        },
+        updateCheck: {
             type: Object,
             default: null,
         },
@@ -70,7 +78,37 @@ export default {
         },
         stackName() {
             return this.stack.name;
-        }
+        },
+        updateBadges() {
+            if (!this.updateCheck) {
+                return [];
+            }
+            const { available, incomplete, unverified } = this.updateCheck;
+            const badges = [];
+            if (available?.length) {
+                badges.push({
+                    icon: "cloud-arrow-down",
+                    color: "bg-primary text-dark",
+                    label: `${this.$t("stackUpdateAvailable")} (${available.join(", ")})`,
+                });
+            }
+            if (incomplete || unverified?.length) {
+                const label = this.$t("stackUpdateCheckIncomplete");
+                badges.push({
+                    icon: "exclamation-circle",
+                    color: "bg-warning text-dark",
+                    label: unverified?.length ? `${label} (${unverified.join(", ")})` : label,
+                });
+            }
+            if (!badges.length) {
+                badges.push({
+                    icon: "check",
+                    color: "bg-secondary text-white",
+                    label: this.$t("stackUpToDate"),
+                });
+            }
+            return badges;
+        },
     },
     watch: {
         isSelectMode() {
@@ -156,6 +194,23 @@ export default {
         font-size: 12px;
         color: $dark-font-color3;
     }
+}
+
+.update-badges {
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+    margin-inline-start: auto;
+    padding-inline-start: 6px;
+}
+
+.update-badge {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
 }
 
 .collapsed {

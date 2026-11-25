@@ -32,6 +32,7 @@ export default defineComponent({
             composeTemplate: "",
 
             stackList: {},
+            stackUpdateChecks: new Map(),
 
             // All stack list from all agents
             allAgentStackList: {} as Record<string, object>,
@@ -307,6 +308,10 @@ export default defineComponent({
 
         emitAgent(endpoint : string, eventName : string, ...args : unknown[]) {
             this.getSocket().emit("agent", endpoint, eventName, ...args);
+        },
+
+        stackUpdateCheckKey(endpoint : string, name : string) {
+            return JSON.stringify([ endpoint || "", name ]);
         },
 
         /**

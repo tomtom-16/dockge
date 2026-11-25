@@ -714,9 +714,22 @@ export default {
 
         updateStack() {
             this.processing = true;
+            const key = this.$root.stackUpdateCheckKey(this.endpoint, this.stack.name);
+            this.$root.stackUpdateChecks.delete(key);
 
             this.$root.emitAgent(this.endpoint, "updateStack", this.stack.name, (res) => {
                 this.processing = false;
+                this.$root.stackUpdateChecks.delete(key);
+                if (res.ok && res.cleanup) {
+                    if (res.cleanup.incomplete) {
+                        res.msg = "stackUpdatedCleanupIncomplete";
+                    } else if (res.cleanup.removed || res.cleanup.retained) {
+                        res.msg = {
+                            key: "stackUpdatedCleanupResult",
+                            values: res.cleanup,
+                        };
+                    }
+                }
                 this.$root.toastRes(res);
             });
         },
